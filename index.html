@@ -2051,8 +2051,16 @@ function cancelEditComment(taskId) {
 function toggleComments(e, taskId) {
   e.stopPropagation();
   const isOpen = openComments.has(taskId);
-  closeAllMeta(taskId, 'comment');
-  if (!isOpen) {
+  if (isOpen) {
+    // Close it
+    openComments.delete(taskId);
+    const panel = document.getElementById(`tc-${taskId}`);
+    const item  = panel?.closest('.task-card')?.querySelector('.task-item');
+    if (panel) panel.classList.remove('open');
+    if (item)  item.classList.remove('comments-open');
+  } else {
+    // Close other meta panels, then open
+    closeAllMeta(taskId, 'comment');
     openComments.add(taskId);
     const panel = document.getElementById(`tc-${taskId}`);
     const item  = panel?.closest('.task-card')?.querySelector('.task-item');
@@ -2124,12 +2132,15 @@ function setPriority(e, taskId, priority) {
 // ── Task Date row toggle ──
 function toggleTaskDates(e, taskId) {
   e.stopPropagation();
-  const row  = document.getElementById(`tdr-${taskId}`);
-  const btn  = document.getElementById(`tdb-${taskId}`);
+  const row = document.getElementById(`tdr-${taskId}`);
+  const btn = document.getElementById(`tdb-${taskId}`);
   if (!row) return;
-  const open = row.style.display === 'flex';
-  closeAllMeta(taskId, 'dates');
-  if (!open) {
+  const isOpen = row.style.display === 'flex';
+  if (isOpen) {
+    row.style.display = 'none';
+    if (btn) btn.style.color = '';
+  } else {
+    closeAllMeta(taskId, 'dates');
     row.style.display = 'flex';
     if (btn) btn.style.color = 'var(--accent)';
   }
