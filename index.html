@@ -542,13 +542,17 @@ select option { background: var(--surface2); }
   font-variant-numeric: normal; padding: 0;
 }
 .done-search-inner input::placeholder { color: var(--muted); }
-#doneSearchClear {
-  background: none; border: none; color: var(--muted); cursor: pointer;
-  font-size: 0.7rem; padding: 2px 4px; border-radius: 4px;
-  transition: color 0.2s; display: none;
+#doneSearchClear, #taskSearchClear {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; font-size: 0.6rem;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: none; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.18s; line-height: 1; padding: 0;
 }
-#doneSearchClear:hover { color: var(--text); }
-#doneSearchClear.visible { display: block; }
+#doneSearchClear:hover, #taskSearchClear:hover {
+  background: rgba(192,57,43,0.15); border-color: #e74c3c; color: #e74c3c;
+}
+#doneSearchClear.visible, #taskSearchClear.visible { display: flex; }
 
 /* Task tab accordion groups (same style as done tab) */
 .task-group { margin-bottom: 10px; }
