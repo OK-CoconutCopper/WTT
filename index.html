@@ -986,16 +986,38 @@ select option { background: var(--surface2); }
 .btn-del-comment:hover { color: #e74c3c; }
 
 .comment-add {
-  display: flex; gap: 8px; align-items: center;
+  display: flex; gap: 8px; align-items: flex-end;
   border-top: 1px solid var(--border); padding-top: 10px;
 }
-.comment-add input {
+.comment-add textarea {
   flex: 1; background: var(--surface3); border: 1px solid var(--border);
   border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif;
-  font-size: 0.82rem; font-variant-numeric: normal; padding: 7px 11px; outline: none; transition: border-color 0.2s;
+  font-size: 0.82rem; font-variant-numeric: normal;
+  padding: 7px 11px; outline: none; transition: border-color 0.2s;
+  resize: none; min-height: 36px; max-height: 120px; line-height: 1.45;
+  overflow-y: auto;
 }
-.comment-add input:focus { border-color: var(--accent); }
-.comment-add input::placeholder { color: var(--muted); }
+.comment-add textarea:focus { border-color: var(--accent); }
+.comment-add textarea::placeholder { color: var(--muted); }
+.comment-reply-input {
+  flex: 1; background: var(--surface3); border: 1px solid #5dade2;
+  border-radius: 7px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.8rem; font-variant-numeric: normal;
+  padding: 5px 10px; outline: none; resize: none;
+  min-height: 32px; max-height: 100px; line-height: 1.45; overflow-y: auto;
+}
+.comment-edit-input {
+  flex: 1; background: var(--surface3); border: 1px solid var(--accent);
+  border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.82rem; font-variant-numeric: normal;
+  padding: 4px 8px; outline: none; resize: none;
+  min-height: 32px; max-height: 100px; line-height: 1.45; overflow-y: auto;
+}
+.comment-hint {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.52rem;
+  color: var(--muted); margin-top: 3px; text-align: right;
+}
+.comment-text { white-space: pre-wrap; word-break: break-word; }
 .btn-post {
   background: var(--accent); border: none; border-radius: 8px; color: #000;
   font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700;
@@ -1911,6 +1933,12 @@ function activeTaskCard(t) {
 // ═══════════════════════════════════════════════════
 // COMMENTS
 // ═══════════════════════════════════════════════════
+// ── Auto-resize textarea ──
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
 // ═══════════════════════════════════════════════════
 // THREADED COMMENTS
 // ═══════════════════════════════════════════════════
@@ -1960,8 +1988,13 @@ function commentsInnerHTML(t) {
 
   return `${threadHtml}
     <div class="comment-add">
-      <input type="text" id="ci-${t.id}" placeholder="Add a comment…" maxlength="300"
-             onkeydown="if(event.key==='Enter')addComment(${t.id})" />
+      <div style="flex:1;display:flex;flex-direction:column">
+        <textarea id="ci-${t.id}" placeholder="Add a comment… (Enter to post, Shift+Enter for new line)"
+                  rows="1" maxlength="1000"
+                  onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addComment(${t.id})}"
+                  oninput="autoResize(this)"></textarea>
+        <div class="comment-hint">Shift+Enter for new line</div>
+      </div>
       <button class="btn-post" onclick="addComment(${t.id})">Post</button>
     </div>`;
 }
@@ -1982,9 +2015,10 @@ function showReplyBox(taskId, parentCommentId, depth) {
       ${indentHtml}
       <div class="comment-body">
         <div class="comment-reply-box">
-          <input class="comment-reply-input" id="ri-${parentCommentId}"
-                 type="text" placeholder="Write a reply…" maxlength="300"
-                 onkeydown="if(event.key==='Enter')postReply(${taskId},${parentCommentId});if(event.key==='Escape')cancelReply(${parentCommentId})" />
+          <textarea class="comment-reply-input" id="ri-${parentCommentId}"
+                 placeholder="Write a reply… (Enter to post, Shift+Enter for new line)" maxlength="1000" rows="1"
+                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();postReply(${taskId},${parentCommentId})}if(event.key==='Escape')cancelReply(${parentCommentId})"
+                 oninput="autoResize(this)"></textarea>
           <button class="btn-post-reply" onclick="postReply(${taskId},${parentCommentId})">↵ Reply</button>
           <button class="btn-cancel-reply" onclick="cancelReply(${parentCommentId})">✕</button>
         </div>
@@ -2020,7 +2054,10 @@ function addComment(taskId) {
   t.comments.push({ id: Date.now(), text, parentId: null, created: new Date().toISOString() });
   save();
   refreshCommentPanel(t);
-  setTimeout(() => document.getElementById(`ci-${taskId}`)?.focus(), 20);
+  setTimeout(() => {
+    const ta = document.getElementById(`ci-${taskId}`);
+    if (ta) { ta.value = ''; autoResize(ta); ta.focus(); }
+  }, 20);
 }
 
 function deleteComment(taskId, commentId) {
@@ -2056,17 +2093,17 @@ function startEditComment(taskId, commentId) {
   const c = t.comments.find(c => c.id === commentId);
   if (!c) return;
   const textEl = document.getElementById(`ctxt-${commentId}`);
-  if (!textEl || textEl.querySelector('input')) return;
+  if (!textEl || textEl.querySelector('textarea')) return;
   const wrap = document.createElement('div');
   wrap.className = 'comment-edit-wrap';
   wrap.innerHTML = `
-    <input class="comment-edit-input" id="cedit-${commentId}" type="text"
-           value="${esc(c.text)}" maxlength="300"
-           onkeydown="if(event.key==='Enter')saveEditComment(${taskId},${commentId});if(event.key==='Escape')cancelEditComment(${taskId},${commentId})" />
+    <textarea class="comment-edit-input" id="cedit-${commentId}" maxlength="1000" rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveEditComment(${taskId},${commentId})}if(event.key==='Escape')cancelEditComment(${taskId})"
+              oninput="autoResize(this)">${esc(c.text)}</textarea>
     <button class="btn-save-comment" onclick="saveEditComment(${taskId},${commentId})">✓</button>`;
   textEl.replaceWith(wrap);
-  const inp = document.getElementById(`cedit-${commentId}`);
-  if (inp) { inp.focus(); inp.select(); }
+  const ta = document.getElementById(`cedit-${commentId}`);
+  if (ta) { autoResize(ta); ta.focus(); ta.select(); }
 }
 
 function saveEditComment(taskId, commentId) {
