@@ -1756,7 +1756,7 @@ function activeTaskCard(t) {
           </div>
           <span class="period-badge ${t.period}" onclick="togglePopup(event,${t.id})">📅 ${esc(pl)} ▾</span>
           <div class="period-popup" id="pp-${t.id}" data-taskid="${t.id}">
-            <button class="period-opt" onclick="pickPeriod(event,${t.id},'na')">∅ N/A</button>
+            <button class="period-opt" onclick="pickPeriod(event,${t.id},'na')">📅 N/A</button>
             <button class="period-opt" onclick="pickPeriod(event,${t.id},'custom-show')">📅 Custom Range…</button>
             <div class="pp-date-block" id="pp-dates-${t.id}" style="display:none">
               <input type="date" id="pp-s-${t.id}" value="${t.periodStart||todayStr()}" />
