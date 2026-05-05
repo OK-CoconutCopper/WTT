@@ -1812,7 +1812,7 @@ function commentsInnerHTML(t) {
           <div class="comment-body">
             <div class="comment-text" id="ctxt-${c.id}">${esc(c.text)}</div>
             <div class="comment-footer">
-              <span class="comment-time">${fmtDateTime(c.created)}${c.edited ? ' ✎' : ''}</span>
+              <span class="comment-time">${fmtDateTime(c.created)}</span>
               <button class="btn-edit-comment" onclick="startEditComment(${t.id},${c.id})" title="Edit">✎</button>
               <button class="btn-del-comment"  onclick="deleteComment(${t.id},${c.id})"    title="Delete">✕</button>
             </div>
