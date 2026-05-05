@@ -563,6 +563,15 @@ select option { background: var(--surface2); }
 }
 #doneSearchClear.visible, #taskSearchClear.visible { display: flex; }
 
+.sg-reorder {
+  display: inline-flex; gap: 4px; margin-left: 6px; align-items: center;
+}
+.sg-reorder span {
+  font-size: 0.72rem; color: var(--muted); cursor: pointer;
+  transition: color 0.18s; line-height: 1;
+}
+.sg-reorder span:hover { color: var(--accent); }
+
 /* Up/down reorder buttons */
 .btn-reorder {
   background: none; border: none; color: var(--muted); cursor: pointer;
@@ -1885,12 +1894,12 @@ function renderTasks() {
     if (critTasks.length === 0) return;
 
     const subGroups = [];
-    c.subcriteria.forEach(s => {
+    c.subcriteria.forEach((s, si) => {
       const subTasks = critTasks.filter(t => t.subcriteriaId === s.id);
-      if (subTasks.length > 0) subGroups.push({ id: `${c.id}-${s.id}`, label: s.name, tasks: subTasks });
+      if (subTasks.length > 0) subGroups.push({ id: `${c.id}-${s.id}`, label: s.name, tasks: subTasks, cid: c.id, sid: s.id });
     });
     const noSub = critTasks.filter(t => !t.subcriteriaId);
-    if (noSub.length > 0) subGroups.push({ id: `${c.id}-none`, label: null, tasks: noSub });
+    if (noSub.length > 0) subGroups.push({ id: `${c.id}-none`, label: null, tasks: noSub, cid: c.id, sid: null });
 
     groups.push({ id: String(c.id), emoji: c.emoji, name: c.name, count: critTasks.length, subGroups });
   });
@@ -1926,6 +1935,10 @@ function renderTasks() {
             ▸ ${esc(sg.label)}
             <span class="task-subgroup-count">${sg.tasks.length} task${sg.tasks.length !== 1 ? 's' : ''}</span>
             <span class="task-subgroup-chevron">▶</span>
+            <span class="sg-reorder" onclick="event.stopPropagation()">
+              <span onclick="moveSubGroup(${sg.cid},${sg.sid},-1)" title="Move up">▲</span>
+              <span onclick="moveSubGroup(${sg.cid},${sg.sid},1)"  title="Move down">▼</span>
+            </span>
           </div>
           <div class="task-subgroup-body">
             <div class="task-subgroup-tasks">${sg.tasks.map(t => activeTaskCard(t)).join('')}</div>
@@ -3239,6 +3252,18 @@ function saveSubName(cid, sid, val) {
 // ═══════════════════════════════════════════════════
 // REORDER TASKS
 // ═══════════════════════════════════════════════════
+function moveSubGroup(cid, sid, dir) {
+  const c = criteria.find(x => x.id === cid);
+  if (!c) return;
+  const idx = c.subcriteria.findIndex(s => s.id === sid);
+  if (idx === -1) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= c.subcriteria.length) return;
+  [c.subcriteria[idx], c.subcriteria[newIdx]] = [c.subcriteria[newIdx], c.subcriteria[idx]];
+  save();
+  renderTasks();
+}
+
 function moveTask(taskId, dir) {
   const t = tasks.find(t => t.id === taskId);
   if (!t) return;
