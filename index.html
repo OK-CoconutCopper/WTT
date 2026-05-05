@@ -1936,7 +1936,7 @@ function activeTaskCard(t) {
         <div class="task-text" onclick="editTaskName(event,${t.id})" id="tname-${t.id}" title="Click to rename">${highlightMatch(t.text, query)}</div>
         <div class="task-meta" style="position:relative">
           <span class="btn-reassign" onclick="toggleReassign(event,${t.id})" title="Change criteria / sub-criteria">⇄</span>
-          <div class="reassign-popup" id="rp-${t.id}">
+          <div class="reassign-popup" id="rp-${t.id}" onclick="event.stopPropagation()">
             <div><label>Criteria</label>
               <select id="rp-crit-${t.id}" onchange="updateReassignSub(${t.id})">
                 <option value="">— None —</option>
