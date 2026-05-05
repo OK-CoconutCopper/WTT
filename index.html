@@ -1315,6 +1315,18 @@ select option { background: var(--surface2); }
     <!-- Filter Bar -->
     <div class="filter-bar" id="filterBar"></div>
 
+    <!-- Task Search -->
+    <div class="done-search-wrap" style="margin-bottom:12px">
+      <div class="done-search-inner">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0">
+          <circle cx="6" cy="6" r="4.5" stroke="var(--muted)" stroke-width="1.5"/>
+          <path d="M9.5 9.5L13 13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input type="text" id="taskSearch" placeholder="Search tasks…" oninput="renderTasks()" />
+        <button id="taskSearchClear" onclick="clearTaskSearch()" title="Clear">✕</button>
+      </div>
+    </div>
+
     <!-- Task List -->
     <div class="task-list" id="taskList"></div>
   </div>
@@ -1669,19 +1681,42 @@ function setFilter(filter, btn) {
 }
 
 function getFiltered() {
+  const searchEl = document.getElementById('taskSearch');
+  const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const clearBtn = document.getElementById('taskSearchClear');
+  if (clearBtn) clearBtn.classList.toggle('visible', query.length > 0);
+
   return tasks.filter(t => {
-    if (t.done) return false; // done tasks live in completed tab
+    if (t.done) return false;
+
+    // Search filter
+    if (query) {
+      const crit = criteria.find(c => c.id === t.criteriaId);
+      const sub  = crit ? crit.subcriteria.find(s => s.id === t.subcriteriaId) : null;
+      const match = t.text.toLowerCase().includes(query)
+        || (crit && crit.name.toLowerCase().includes(query))
+        || (sub  && sub.name.toLowerCase().includes(query));
+      if (!match) return false;
+    }
+
     if (currentFilter === 'all')    return true;
     if (currentFilter === 'high')   return t.priority === 'high';
     if (currentFilter === 'medium') return t.priority === 'medium';
     if (currentFilter === 'low')    return t.priority === 'low';
     if (currentFilter === 'na-pri') return t.priority === 'na';
     if (currentFilter === 'custom') return t.period === 'custom';
-    // criteria id filter
     const numFilter = parseInt(currentFilter);
     if (!isNaN(numFilter)) return t.criteriaId === numFilter;
     return true;
   });
+}
+
+function clearTaskSearch() {
+  const inp = document.getElementById('taskSearch');
+  if (inp) inp.value = '';
+  const btn = document.getElementById('taskSearchClear');
+  if (btn) btn.classList.remove('visible');
+  renderTasks();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1724,9 +1759,14 @@ function renderTasks() {
   const filtered = getFiltered();
 
   if (filtered.length === 0) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">✦</div>No tasks here.<br>Add something above to get started.</div>`;
+    const query = document.getElementById('taskSearch')?.value.trim();
+    list.innerHTML = query
+      ? `<div class="empty"><div class="empty-icon">🔍</div>No tasks match "<strong>${esc(query)}</strong>".</div>`
+      : `<div class="empty"><div class="empty-icon">✦</div>No tasks here.<br>Add something above to get started.</div>`;
     return;
   }
+
+  const query = document.getElementById('taskSearch')?.value.trim().toLowerCase() || '';
 
   // Build groups: criteria → sub-criteria → tasks
   const groups = [];
@@ -1753,14 +1793,14 @@ function renderTasks() {
   }
 
   list.innerHTML = groups.map(g => {
-    const isOpen = openTaskGroups.has(g.id);
+    const isOpen = query ? true : openTaskGroups.has(g.id);
     const subLabels = g.subGroups.filter(sg => sg.label).map(sg => esc(sg.label)).join(' · ');
     const preview = subLabels
       ? `<span style="font-family:JetBrains Mono,monospace;font-size:0.58rem;color:var(--muted);margin-left:4px">${subLabels}</span>`
       : '';
 
     const subGroupsHtml = g.subGroups.map(sg => {
-      const sgOpen = openTaskSubgroups.has(sg.id);
+      const sgOpen = query ? true : openTaskSubgroups.has(sg.id);
 
       if (!sg.label) {
         return `
@@ -1803,6 +1843,7 @@ function activeTaskCard(t) {
   const comments = t.comments || [];
   const cCount = comments.length;
   const commentsOpen = openComments.has(t.id);
+  const query = document.getElementById('taskSearch')?.value.trim().toLowerCase() || '';
 
   return `
   <div class="task-card">
@@ -1813,7 +1854,7 @@ function activeTaskCard(t) {
         </svg>
       </div>
       <div class="task-content">
-        <div class="task-text">${esc(t.text)}</div>
+        <div class="task-text">${highlightMatch(t.text, query)}</div>
         <div class="task-meta">
           <span class="tag tag-${t.priority} clickable" onclick="togglePriorityPopup(event,${t.id})">${t.priority === 'na' ? 'N/A' : t.priority}</span>
           <div class="priority-popup" id="prip-${t.id}">
