@@ -2086,7 +2086,7 @@ function commentsInnerHTML(t) {
       <div class="comment-node">
         <div class="comment-item" id="cmt-${c.id}">
           ${indentHtml}
-          <div class="comment-avatar">💬</div>
+          <div class="comment-avatar">${isRoot ? '📢' : '💬'}</div>
           <div class="comment-body">
             <div class="comment-text" id="ctxt-${c.id}">${esc(c.text)}</div>
             <div class="comment-footer">
