@@ -563,7 +563,30 @@ select option { background: var(--surface2); }
 }
 #doneSearchClear.visible, #taskSearchClear.visible { display: flex; }
 
-/* Criteria reassign popup on task card */
+/* Up/down reorder buttons */
+.btn-reorder {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.85rem; padding: 1px 3px; line-height: 1;
+  transition: color 0.18s; display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;
+}
+.btn-reorder span { display: block; line-height: 1; cursor: pointer; transition: color 0.18s; }
+.btn-reorder span:hover { color: var(--accent); }
+.criteria-reorder {
+  display: flex; flex-direction: column; gap: 1px; flex-shrink: 0;
+}
+.criteria-reorder button {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.6rem; padding: 0 3px; line-height: 1.2; transition: color 0.18s;
+}
+.criteria-reorder button:hover { color: var(--accent); }
+.sub-chip-reorder {
+  display: inline-flex; flex-direction: column; gap: 0; margin-right: 2px;
+}
+.sub-chip-reorder button {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.5rem; padding: 0; line-height: 1.1; transition: color 0.18s;
+}
+.sub-chip-reorder button:hover { color: var(--accent); }
 .btn-reassign {
   background: none; border: none; color: var(--muted); cursor: pointer;
   font-size: 0.72rem; padding: 0 3px; line-height: 1;
@@ -1996,6 +2019,10 @@ function activeTaskCard(t) {
           <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
       </button>
+      <div class="btn-reorder" title="Move up/down">
+        <span onclick="moveTask(${t.id},-1)">▲</span>
+        <span onclick="moveTask(${t.id},1)">▼</span>
+      </div>
     </div>
     <div class="task-comments${commentsOpen ? ' open' : ''}" id="tc-${t.id}">
       ${commentsInnerHTML(t)}
@@ -3059,7 +3086,7 @@ function renderCriteria() {
     return;
   }
 
-  list.innerHTML = criteria.map(c => {
+  list.innerHTML = criteria.map((c, ci) => {
     const taskCount = tasks.filter(t=>t.criteriaId===c.id).length;
     return `
     <div class="criteria-card" data-cid="${c.id}">
@@ -3070,7 +3097,7 @@ function renderCriteria() {
         <button class="btn-icon del" onclick="deleteCriteria(${c.id})" title="Delete">✕</button>
       </div>
       <div class="subcriteria-list">
-        ${c.subcriteria.map(s => `
+        ${c.subcriteria.map((s, si) => `
           <span class="sub-chip">
             <span class="sub-chip-name" id="sname-${c.id}-${s.id}" onclick="editSubName(${c.id},${s.id})" title="Click to rename">${esc(s.name)}</span>
             <button class="del-sub" onclick="deleteSubcriteria(${c.id},${s.id})" title="Remove">×</button>
@@ -3093,6 +3120,9 @@ function addCriteria() {
   const emoji = document.getElementById('newCriteriaEmoji').value.trim() || '🏷️';
   const name  = document.getElementById('newCriteriaName').value.trim();
   if (!name) { document.getElementById('newCriteriaName').focus(); return; }
+  if (criteria.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+    showToast(`⚠️ "${name}" already exists as a criteria.`); return;
+  }
   criteria.push({ id: Date.now(), name, emoji, subcriteria: [] });
   document.getElementById('newCriteriaEmoji').value = '';
   document.getElementById('newCriteriaName').value  = '';
@@ -3116,10 +3146,12 @@ function addSub(cid) {
   const name = inp?.value.trim();
   if (!name) { inp?.focus(); return; }
   const c = criteria.find(x=>x.id===cid);
-  if (c) {
-    c.subcriteria.push({ id: Date.now(), name });
-    save(); inp.value=''; populateCriteriaSelect(); renderCriteria();
+  if (!c) return;
+  if (c.subcriteria.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+    showToast(`⚠️ "${name}" already exists in ${c.name}.`); return;
   }
+  c.subcriteria.push({ id: Date.now(), name });
+  save(); inp.value=''; populateCriteriaSelect(); renderCriteria();
 }
 
 function deleteSubcriteria(cid, sid) {
@@ -3158,7 +3190,12 @@ function saveCriteriaName(cid, val) {
   const name = val.trim();
   if (!name) { renderCriteria(); return; }
   const c = criteria.find(x=>x.id===cid);
-  if (c) { c.name = name; save(); populateCriteriaSelect(); renderCriteria(); renderTasks(); }
+  if (!c) return;
+  if (criteria.some(x => x.id !== cid && x.name.toLowerCase() === name.toLowerCase())) {
+    showToast(`⚠️ "${name}" already exists as a criteria.`);
+    renderCriteria(); return;
+  }
+  c.name = name; save(); populateCriteriaSelect(); renderCriteria(); renderTasks();
 }
 
 function editSubName(cid, sid) {
@@ -3184,11 +3221,34 @@ function saveSubName(cid, sid, val) {
   if (!name) { renderCriteria(); return; }
   const c = criteria.find(x=>x.id===cid);
   const s = c?.subcriteria.find(x=>x.id===sid);
-  if (s) { s.name = name; save(); populateCriteriaSelect(); renderCriteria(); renderTasks(); }
+  if (!s) return;
+  if (c.subcriteria.some(x => x.id !== sid && x.name.toLowerCase() === name.toLowerCase())) {
+    showToast(`⚠️ "${name}" already exists in ${c.name}.`);
+    renderCriteria(); return;
+  }
+  s.name = name; save(); populateCriteriaSelect(); renderCriteria(); renderTasks();
 }
 
 // ═══════════════════════════════════════════════════
-// UTILITIES
+// REORDER TASKS
+// ═══════════════════════════════════════════════════
+function moveTask(taskId, dir) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  const group = tasks.filter(x =>
+    !x.done &&
+    x.criteriaId    === t.criteriaId &&
+    x.subcriteriaId === t.subcriteriaId
+  );
+  const idx = group.indexOf(t);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= group.length) return;
+  const ai = tasks.indexOf(group[idx]);
+  const bi = tasks.indexOf(group[newIdx]);
+  [tasks[ai], tasks[bi]] = [tasks[bi], tasks[ai]];
+  save();
+  renderTasks();
+}
 // ═══════════════════════════════════════════════════
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
