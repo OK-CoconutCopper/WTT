@@ -395,7 +395,16 @@ select option { background: var(--surface2); }
 .task-item.done .task-check svg { display: block; }
 
 .task-content { flex: 1; min-width: 0; }
-.task-text { font-family: 'Inter', sans-serif; font-size: 0.93rem; font-weight: 500; font-variant-numeric: normal; line-height: 1.4; margin-bottom: 6px; word-break: break-word; }
+.task-text { font-family: 'Inter', sans-serif; font-size: 0.93rem; font-weight: 500; font-variant-numeric: normal; line-height: 1.4; margin-bottom: 6px; word-break: break-word; cursor: pointer; }
+.task-text:hover { opacity: 0.85; }
+.task-name-input {
+  font-family: 'Inter', sans-serif; font-size: 0.93rem; font-weight: 500;
+  font-variant-numeric: normal; line-height: 1.4; width: 100%;
+  background: var(--surface2); border: 1px solid var(--accent);
+  border-radius: 6px; color: var(--text); padding: 3px 8px;
+  outline: none; margin-bottom: 6px; resize: none;
+  overflow: hidden;
+}
 .task-time { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); }
 
 .task-meta {
@@ -1880,7 +1889,7 @@ function activeTaskCard(t) {
         </svg>
       </div>
       <div class="task-content">
-        <div class="task-text">${highlightMatch(t.text, query)}</div>
+        <div class="task-text" onclick="editTaskName(event,${t.id})" id="tname-${t.id}" title="Click to rename">${highlightMatch(t.text, query)}</div>
         <div class="task-meta">
           <span class="tag tag-${t.priority} clickable" onclick="togglePriorityPopup(event,${t.id})">${t.priority === 'na' ? 'N/A' : t.priority}</span>
           <div class="priority-popup" id="prip-${t.id}">
@@ -2211,7 +2220,44 @@ function setPriority(e, taskId, priority) {
   renderTasks();
 }
 
-// ── Task Date row toggle ──
+// ── Task name inline edit ──
+function editTaskName(e, taskId) {
+  e.stopPropagation();
+  const nameEl = document.getElementById(`tname-${taskId}`);
+  if (!nameEl || nameEl.tagName === 'TEXTAREA') return;
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+
+  const ta = document.createElement('textarea');
+  ta.className   = 'task-name-input';
+  ta.value       = t.text;
+  ta.maxLength   = 200;
+  ta.rows        = 1;
+  ta.setAttribute('onkeydown',
+    `if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTaskName(${taskId},this)}` +
+    `if(event.key==='Escape')cancelTaskName(${taskId})`);
+  ta.setAttribute('oninput', 'autoResize(this)');
+  nameEl.replaceWith(ta);
+  autoResize(ta);
+  ta.focus();
+  ta.select();
+}
+
+function saveTaskName(taskId, el) {
+  const newText = (el?.value || '').trim();
+  if (!newText) { el?.focus(); return; }
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  t.text = newText;
+  save();
+  renderTasks();
+  if (currentView === 'completed') renderCompleted();
+}
+
+function cancelTaskName(taskId) {
+  renderTasks();
+  if (currentView === 'completed') renderCompleted();
+}
 function toggleTaskDates(e, taskId) {
   e.stopPropagation();
   const row = document.getElementById(`tdr-${taskId}`);
@@ -2428,7 +2474,7 @@ function doneTaskCard(t) {
         </svg>
       </div>
       <div class="task-content">
-        <div class="task-text">${highlightMatch(t.text, query)}</div>
+        <div class="task-text" onclick="editTaskName(event,${t.id})" id="tname-${t.id}" title="Click to rename">${highlightMatch(t.text, query)}</div>
         <div class="task-meta">
           <span class="tag tag-${t.priority}">${t.priority === 'na' ? 'N/A' : t.priority}</span>
           <span class="period-badge ${t.period}">📅 ${esc(pl)}</span>
