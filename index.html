@@ -283,6 +283,25 @@ select option { background: var(--surface2); }
 .form-row input[type="date"] { flex: 1; min-width: 130px; }
 .form-row select { flex: 1; min-width: 140px; }
 
+.btn-optional-dates {
+  background: none; border: none; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  cursor: pointer; padding: 4px 0; transition: color 0.18s;
+}
+.btn-optional-dates:hover { color: var(--accent); }
+.btn-optional-dates.open  { color: var(--accent); }
+.optional-dates-panel {
+  display: none; margin-top: 8px;
+  animation: fadeDown 0.18s ease both;
+}
+.optional-dates-panel.open { display: block; }
+.opt-date-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+  white-space: nowrap; align-self: center;
+}
+
 /* ── Add Task Form ── */
 .add-form {
   background: var(--surface);
@@ -349,10 +368,10 @@ select option { background: var(--surface2); }
   gap: 12px;
   transition: border-color 0.2s, transform 0.15s;
   position: relative;
-  animation: slideIn 0.22s ease both;
   border-left-width: 3px;
+  isolation: auto;
 }
-.task-item:hover { border-color: #3a3a45; transform: translateX(2px); }
+.task-item:hover { border-color: #3a3a45; transform: translateX(2px); z-index: 2; }
 .task-item.done { opacity: 0.5; }
 .task-item.done .task-text { text-decoration: line-through; color: var(--muted); }
 .task-item[data-priority="high"]  { border-left-color: var(--high); }
@@ -377,6 +396,7 @@ select option { background: var(--surface2); }
 
 .task-content { flex: 1; min-width: 0; }
 .task-text { font-family: 'Inter', sans-serif; font-size: 0.93rem; font-weight: 500; font-variant-numeric: normal; line-height: 1.4; margin-bottom: 6px; word-break: break-word; }
+.task-time { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); }
 
 .task-meta {
   display: flex;
@@ -660,28 +680,33 @@ select option { background: var(--surface2); }
 
 /* Activity chart */
 .activity-chart {
-  display: flex; align-items: flex-end; gap: 3px; height: 68px;
-  padding-top: 4px; overflow: hidden;
+  display: flex; align-items: flex-end; gap: 4px;
+  height: 100px; padding-top: 4px; overflow: hidden;
+  border-bottom: 1px solid var(--border); margin-bottom: 6px;
 }
 .activity-bar-wrap {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 4px; min-width: 0;
+  flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+  align-items: center; gap: 0; min-width: 0; height: 100%;
+}
+.activity-bars {
+  display: flex; align-items: flex-end; gap: 2px; width: 100%;
+  flex: 1;
 }
 .activity-bar {
-  width: 100%; border-radius: 3px 3px 0 0;
-  background: var(--accent); opacity: 0.85;
+  flex: 1; border-radius: 3px 3px 0 0;
   transition: height 0.4s cubic-bezier(0.4,0,0.2,1);
   min-height: 2px;
 }
-.activity-bar.has-done { opacity: 1; }
+.activity-bar.bar-done   { background: #4caf80; }
+.activity-bar.bar-active { background: var(--accent); }
 .activity-bar-label {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.48rem;
-  color: var(--muted); white-space: nowrap; overflow: hidden;
-  text-overflow: clip; max-width: 100%; text-align: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.46rem;
+  color: var(--muted); white-space: nowrap; text-align: center;
+  height: 14px; line-height: 14px; flex-shrink: 0; width: 100%;
 }
-.activity-bar-wrap:hover .activity-bar { opacity: 1; filter: brightness(1.15); }
+.activity-bar-wrap:hover .activity-bar { filter: brightness(1.2); }
 .dash-activity-legend {
-  display: flex; gap: 12px; margin-top: 10px;
+  display: flex; gap: 12px; margin-top: 8px;
 }
 .dash-legend-dot {
   width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
@@ -703,6 +728,51 @@ select option { background: var(--surface2); }
   font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
   color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3px;
 }
+/* Priority popup */
+.priority-popup {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 5px; z-index: 500;
+  display: none; flex-direction: column; gap: 2px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 110px;
+}
+.priority-popup.open { display: flex; }
+.priority-opt-btn {
+  background: none; border: none; border-radius: 7px;
+  padding: 6px 10px; cursor: pointer; text-align: left;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  transition: background 0.15s; color: var(--text);
+}
+.priority-opt-btn:hover { background: var(--surface3); }
+.priority-opt-btn.opt-high   { color: #e74c3c; }
+.priority-opt-btn.opt-medium { color: #f0a500; }
+.priority-opt-btn.opt-low    { color: #5dade2; }
+.priority-opt-btn.opt-na     { color: #9090a8; }
+.tag.clickable { cursor: pointer; user-select: none; position: relative; }
+.tag.clickable:hover { opacity: 0.82; }
+.tag.clickable::after { content: ' ▾'; font-size: 0.55rem; opacity: 0.6; }
+
+/* Comment edit */
+.comment-edit-wrap {
+  display: flex; gap: 6px; align-items: center; margin-top: 2px;
+}
+.comment-edit-input {
+  flex: 1; background: var(--surface3); border: 1px solid var(--accent);
+  border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.82rem; font-variant-numeric: normal;
+  padding: 4px 8px; outline: none;
+}
+.btn-save-comment {
+  background: var(--accent); border: none; border-radius: 6px; color: #000;
+  font-size: 0.72rem; font-weight: 700; padding: 4px 10px; cursor: pointer;
+}
+.btn-edit-comment {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.6rem; padding: 0 2px; transition: color 0.18s; line-height: 1;
+}
+.btn-edit-comment:hover { color: var(--accent); }
+
 .period-popup {
   position: absolute;
   top: calc(100% + 5px);
@@ -751,7 +821,42 @@ select option { background: var(--surface2); }
   text-align: center;
 }
 
-.task-time {
+.task-date-row {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-top: 5px; padding-top: 5px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.task-date-field {
+  display: flex; align-items: center; gap: 5px;
+}
+.task-date-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+  text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted);
+  white-space: nowrap;
+}
+.task-date-val {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+  color: var(--text); cursor: pointer; padding: 2px 6px;
+  border-radius: 5px; border: 1px solid transparent;
+  transition: border-color 0.18s, background 0.18s;
+  white-space: nowrap;
+}
+.task-date-val:hover { border-color: var(--border); background: var(--surface2); }
+.task-date-val.empty { color: var(--muted); font-style: italic; }
+.task-date-val.completed-date { color: #4caf80; }
+.task-date-input {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+  background: var(--surface2); border: 1px solid var(--accent);
+  border-radius: 5px; color: var(--text); padding: 2px 6px; outline: none;
+}
+/* Toggle link */
+.btn-toggle-dates {
+  background: none; border: none; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.58rem;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  cursor: pointer; padding: 2px 0; transition: color 0.18s; line-height: 1;
+}
+.btn-toggle-dates:hover { color: var(--accent); }
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   color: var(--muted);
@@ -1122,6 +1227,21 @@ select option { background: var(--surface2); }
         <span style="color:var(--muted);font-size:0.8rem;align-self:center;">→</span>
         <input type="date" id="periodEnd" />
       </div>
+
+      <!-- Optional date fields — hidden by default -->
+      <div style="margin-top:4px">
+        <button type="button" class="btn-optional-dates" onclick="toggleOptionalDates()" id="optDatesBtn">
+          ＋ Set task date / completion date
+        </button>
+        <div class="optional-dates-panel" id="optDatesPanel">
+          <div class="form-row" style="margin-bottom:0">
+            <label class="opt-date-label">📌 Task Date</label>
+            <input type="date" id="taskDateInput" title="When did this task happen?" />
+            <label class="opt-date-label">✅ Completed</label>
+            <input type="date" id="completedDateInput" title="When was this completed?" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Filter Bar -->
@@ -1161,10 +1281,16 @@ select option { background: var(--surface2); }
         <button class="dash-mode-tab" onclick="setDashMode('monthly',this)">Monthly</button>
       </div>
       <div class="dash-nav" id="dashNav" style="display:none">
-        <!-- Month prev/next — only shown in monthly mode -->
-        <button class="dash-nav-btn" id="dashMonthPrev" onclick="navigateDash(-1)" style="display:none">◀</button>
-        <span class="dash-nav-label" id="dashMonthLabel" style="display:none"></span>
-        <button class="dash-nav-btn" id="dashMonthNext" onclick="navigateDash(1)" style="display:none">▶</button>
+        <!-- Month selector — only in monthly mode -->
+        <select class="dash-year-input" id="dashMonthSelect" style="display:none;width:90px"
+                onchange="dashMonth=parseInt(this.value);renderDashboard()">
+          <option value="0">January</option><option value="1">February</option>
+          <option value="2">March</option><option value="3">April</option>
+          <option value="4">May</option><option value="5">June</option>
+          <option value="6">July</option><option value="7">August</option>
+          <option value="8">September</option><option value="9">October</option>
+          <option value="10">November</option><option value="11">December</option>
+        </select>
         <!-- Year input -->
         <span class="dash-year-label">Year</span>
         <input class="dash-year-input" type="number" id="dashYearInput" min="2000" max="2099"
@@ -1217,6 +1343,23 @@ select option { background: var(--surface2); }
       <!-- Monthly Table / Activity Chart (full width, swaps based on mode) -->
       <div class="dash-card full" id="dashActivityCard">
         <div class="dash-title" id="dashActivityTitle">Activity</div>
+        <!-- Day chart (shown in monthly mode only) -->
+        <div id="dashDayChartWrap" style="display:none">
+          <div class="activity-chart" id="dashDayActivity"></div>
+          <div class="dash-activity-legend" style="margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:5px">
+              <div class="dash-legend-dot" style="background:#4caf80;border-radius:2px"></div>
+              <span class="dash-legend-text">Completed</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div class="dash-legend-dot" style="background:var(--accent);border-radius:2px"></div>
+              <span class="dash-legend-text">Active</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);margin-bottom:12px;padding-top:12px">
+            <div class="dash-title">Full Year — <span id="dashTableYear"></span></div>
+          </div>
+        </div>
         <!-- Monthly table (shown in monthly mode) -->
         <div id="dashMonthlyTable" style="display:none;overflow-x:auto"></div>
         <!-- Bar activity chart (shown in yearly / all-time mode) -->
@@ -1224,8 +1367,12 @@ select option { background: var(--surface2); }
           <div class="activity-chart" id="dashActivity"></div>
           <div class="dash-activity-legend">
             <div style="display:flex;align-items:center;gap:5px">
-              <div class="dash-legend-dot" style="background:var(--accent)"></div>
-              <span class="dash-legend-text">Tasks Created</span>
+              <div class="dash-legend-dot" style="background:#4caf80;border-radius:2px"></div>
+              <span class="dash-legend-text">Completed</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div class="dash-legend-dot" style="background:var(--accent);border-radius:2px"></div>
+              <span class="dash-legend-text">Active</span>
             </div>
           </div>
         </div>
@@ -1340,6 +1487,15 @@ function updateSubcriteria() {
   }
 }
 
+function toggleOptionalDates() {
+  const btn   = document.getElementById('optDatesBtn');
+  const panel = document.getElementById('optDatesPanel');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '＋ Set task date / completion date' : '－ Set task date / completion date';
+}
+
 function toggleCustomDates() {
   const val = document.getElementById('periodSelect').value;
   document.getElementById('customDates').classList.toggle('visible', val === 'custom');
@@ -1356,23 +1512,34 @@ function addTask() {
   const period  = document.getElementById('periodSelect').value;
   const cid     = parseInt(document.getElementById('criteriaSelect').value)    || null;
   const sid     = parseInt(document.getElementById('subcriteriaSelect').value) || null;
+  const taskDateVal      = document.getElementById('taskDateInput').value      || null;
+  const completedDateVal = document.getElementById('completedDateInput').value || null;
 
   tasks.unshift({
-    id:          Date.now(),
+    id:            Date.now(),
     text,
-    criteriaId:  cid,
+    criteriaId:    cid,
     subcriteriaId: sid,
-    priority:    document.getElementById('prioritySelect').value,
+    priority:      document.getElementById('prioritySelect').value,
     period,
-    periodStart: period === 'custom' ? document.getElementById('periodStart').value : null,
-    periodEnd:   period === 'custom' ? document.getElementById('periodEnd').value   : null,
-    done:        false,
-    created:     new Date().toISOString(),
-    comments:    []
+    periodStart:   period === 'custom' ? document.getElementById('periodStart').value : null,
+    periodEnd:     period === 'custom' ? document.getElementById('periodEnd').value   : null,
+    done:          !!completedDateVal,
+    taskDate:      taskDateVal,
+    completedDate: completedDateVal,
+    created:       new Date().toISOString(),
+    comments:      []
   });
 
   save();
   inp.value = '';
+  // Reset optional date fields and collapse panel
+  document.getElementById('taskDateInput').value      = '';
+  document.getElementById('completedDateInput').value = '';
+  const panel = document.getElementById('optDatesPanel');
+  const btn   = document.getElementById('optDatesBtn');
+  if (panel) panel.classList.remove('open');
+  if (btn)   { btn.classList.remove('open'); btn.textContent = '＋ Set task date / completion date'; }
   inp.focus();
   renderTasks();
   updateGlobalStats();
@@ -1383,6 +1550,8 @@ function toggleTask(id) {
   const t = tasks.find(t => t.id === id);
   if (t) {
     t.done = !t.done;
+    if (t.done && !t.completedDate) t.completedDate = todayStr();
+    if (!t.done) t.completedDate = null;
     save();
     renderTasks();
     updateGlobalStats();
@@ -1578,7 +1747,13 @@ function activeTaskCard(t) {
       <div class="task-content">
         <div class="task-text">${esc(t.text)}</div>
         <div class="task-meta">
-          <span class="tag tag-${t.priority}">${t.priority === 'na' ? 'N/A' : t.priority}</span>
+          <span class="tag tag-${t.priority} clickable" onclick="togglePriorityPopup(event,${t.id})">${t.priority === 'na' ? 'N/A' : t.priority}</span>
+          <div class="priority-popup" id="prip-${t.id}">
+            <button class="priority-opt-btn opt-high"   onclick="setPriority(event,${t.id},'high')">🔴 High</button>
+            <button class="priority-opt-btn opt-medium" onclick="setPriority(event,${t.id},'medium')">🟡 Medium</button>
+            <button class="priority-opt-btn opt-low"    onclick="setPriority(event,${t.id},'low')">🔵 Low</button>
+            <button class="priority-opt-btn opt-na"     onclick="setPriority(event,${t.id},'na')">∅ N/A</button>
+          </div>
           <span class="period-badge ${t.period}" onclick="togglePopup(event,${t.id})">📅 ${esc(pl)} ▾</span>
           <div class="period-popup" id="pp-${t.id}" data-taskid="${t.id}">
             <button class="period-opt" onclick="pickPeriod(event,${t.id},'na')">∅ N/A</button>
@@ -1594,7 +1769,22 @@ function activeTaskCard(t) {
                   onclick="toggleComments(event,${t.id})">
             💬 ${cCount > 0 ? cCount : 'Comment'}
           </button>
+          <button class="btn-toggle-dates" onclick="toggleTaskDates(event,${t.id})" id="tdb-${t.id}" style="${(t.taskDate||t.completedDate)?'color:var(--accent)':''}">📅 dates</button>
           <span class="task-time">${fmtTime(t.created)}</span>
+        </div>
+        <div class="task-date-row" id="tdr-${t.id}" style="display:${(t.taskDate||t.completedDate)?'flex':'none'}">
+          <div class="task-date-field">
+            <span class="task-date-label">📌 Task</span>
+            <span class="task-date-val${!t.taskDate?' empty':''}"
+                  onclick="editTaskDate(event,${t.id},'taskDate')"
+                  id="td-task-${t.id}">${t.taskDate || 'Set date'}</span>
+          </div>
+          <div class="task-date-field">
+            <span class="task-date-label">✅ Done</span>
+            <span class="task-date-val completed-date${!t.completedDate?' empty':''}"
+                  onclick="editTaskDate(event,${t.id},'completedDate')"
+                  id="td-done-${t.id}">${t.completedDate || 'Not set'}</span>
+          </div>
         </div>
       </div>
       <button class="btn-delete" onclick="deleteTask(${t.id})" title="Delete">
@@ -1620,10 +1810,11 @@ function commentsInnerHTML(t) {
         <div class="comment-item" id="cmt-${c.id}">
           <div class="comment-avatar">💬</div>
           <div class="comment-body">
-            <div class="comment-text">${esc(c.text)}</div>
+            <div class="comment-text" id="ctxt-${c.id}">${esc(c.text)}</div>
             <div class="comment-footer">
-              <span class="comment-time">${fmtDateTime(c.created)}</span>
-              <button class="btn-del-comment" onclick="deleteComment(${t.id},${c.id})" title="Delete comment">✕</button>
+              <span class="comment-time">${fmtDateTime(c.created)}${c.edited ? ' ✎' : ''}</span>
+              <button class="btn-edit-comment" onclick="startEditComment(${t.id},${c.id})" title="Edit">✎</button>
+              <button class="btn-del-comment"  onclick="deleteComment(${t.id},${c.id})"    title="Delete">✕</button>
             </div>
           </div>
         </div>`).join('')}
@@ -1639,15 +1830,14 @@ function commentsInnerHTML(t) {
 
 function toggleComments(e, taskId) {
   e.stopPropagation();
-  openComments.has(taskId) ? openComments.delete(taskId) : openComments.add(taskId);
   const isOpen = openComments.has(taskId);
-  const panel  = document.getElementById(`tc-${taskId}`);
-  const card   = panel?.closest('.task-card');
-  const item   = card?.querySelector('.task-item');
-  if (panel) panel.classList.toggle('open', isOpen);
-  if (item)  item.classList.toggle('comments-open', isOpen);
-  if (isOpen && panel) {
-    // Focus input
+  closeAllMeta(taskId, 'comment');
+  if (!isOpen) {
+    openComments.add(taskId);
+    const panel = document.getElementById(`tc-${taskId}`);
+    const item  = panel?.closest('.task-card')?.querySelector('.task-item');
+    if (panel) panel.classList.add('open');
+    if (item)  item.classList.add('comments-open');
     setTimeout(() => document.getElementById(`ci-${taskId}`)?.focus(), 50);
   }
 }
@@ -1686,6 +1876,158 @@ function deleteComment(taskId, commentId) {
     btn.textContent = t.comments.length > 0 ? `💬 ${t.comments.length}` : '💬 Comment';
     btn.classList.toggle('has-comments', t.comments.length > 0);
   }
+}
+
+// ── Close all meta panels for a task ──
+function closeAllMeta(taskId, except) {
+  // Priority popup
+  if (except !== 'priority') {
+    const pp = document.getElementById(`prip-${taskId}`);
+    if (pp) pp.classList.remove('open');
+  }
+  // Period popup
+  if (except !== 'period') closeAllPopups();
+  // Comments
+  if (except !== 'comment') {
+    const panel = document.getElementById(`tc-${taskId}`);
+    const item  = panel?.closest('.task-card')?.querySelector('.task-item');
+    if (panel) { panel.classList.remove('open'); openComments.delete(taskId); }
+    if (item)  item.classList.remove('comments-open');
+  }
+  // Dates row
+  if (except !== 'dates') {
+    const row = document.getElementById(`tdr-${taskId}`);
+    const btn = document.getElementById(`tdb-${taskId}`);
+    if (row) row.style.display = 'none';
+    if (btn) btn.style.color = '';
+  }
+}
+
+// ── Priority popup ──
+function togglePriorityPopup(e, taskId) {
+  e.stopPropagation();
+  const pp = document.getElementById(`prip-${taskId}`);
+  if (!pp) return;
+  const isOpen = pp.classList.contains('open');
+  closeAllMeta(taskId, 'priority');
+  document.querySelectorAll('.priority-popup.open').forEach(p => p.classList.remove('open'));
+  if (!isOpen) { pp.classList.add('open'); document.querySelector(`.task-item[data-taskid="${taskId}"]`).style.zIndex = '50'; }
+  else { document.querySelector(`.task-item[data-taskid="${taskId}"]`).style.zIndex = ''; }
+}
+
+function setPriority(e, taskId, priority) {
+  e.stopPropagation();
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  t.priority = priority;
+  save();
+  // Close popup and patch tag in place
+  const pp = document.getElementById(`prip-${taskId}`);
+  if (pp) pp.classList.remove('open');
+  const item = document.querySelector(`.task-item[data-taskid="${taskId}"]`);
+  if (item) {
+    item.dataset.priority = priority;
+    const tag = item.querySelector('.tag.clickable');
+    if (tag) {
+      tag.className = `tag tag-${priority} clickable`;
+      // Remove old popup and re-insert fresh one (so onclick IDs stay correct)
+    }
+  }
+  // Lightweight re-render of just this task card
+  renderTasks();
+}
+
+// ── Task Date row toggle ──
+function toggleTaskDates(e, taskId) {
+  e.stopPropagation();
+  const row  = document.getElementById(`tdr-${taskId}`);
+  const btn  = document.getElementById(`tdb-${taskId}`);
+  if (!row) return;
+  const open = row.style.display === 'flex';
+  closeAllMeta(taskId, 'dates');
+  if (!open) {
+    row.style.display = 'flex';
+    if (btn) btn.style.color = 'var(--accent)';
+  }
+}
+
+// ── Task Date inline edit ──
+function editTaskDate(e, taskId, field) {
+  e.stopPropagation();
+  const elId  = field === 'taskDate' ? `td-task-${taskId}` : `td-done-${taskId}`;
+  const span  = document.getElementById(elId);
+  if (!span || span.querySelector('input')) return;
+
+  const t       = tasks.find(t => t.id === taskId);
+  const current = t?.[field] || '';
+
+  const inp = document.createElement('input');
+  inp.type  = 'date';
+  inp.className = 'task-date-input';
+  inp.value = current;
+  span.replaceWith(inp);
+  inp.focus();
+
+  const commit = () => {
+    const val = inp.value || null;
+    if (t) {
+      t[field] = val;
+      // if setting completedDate, also mark done status
+      if (field === 'completedDate') t.done = !!val;
+      save();
+    }
+    renderTasks();
+    updateGlobalStats();
+    updateDoneBadge();
+    if (currentView === 'completed') renderCompleted();
+  };
+
+  inp.addEventListener('change', commit);
+  inp.addEventListener('blur',   commit);
+  inp.addEventListener('keydown', ev => { if (ev.key === 'Escape') renderTasks(); });
+}
+function startEditComment(taskId, commentId) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  const c = t.comments.find(c => c.id === commentId);
+  if (!c) return;
+
+  const textEl = document.getElementById(`ctxt-${commentId}`);
+  if (!textEl) return;
+
+  // Replace text div with inline input
+  const wrap = document.createElement('div');
+  wrap.className = 'comment-edit-wrap';
+  wrap.innerHTML = `
+    <input class="comment-edit-input" id="cedit-${commentId}" type="text"
+           value="${esc(c.text)}" maxlength="300"
+           onkeydown="if(event.key==='Enter')saveEditComment(${taskId},${commentId});if(event.key==='Escape')cancelEditComment(${taskId},${commentId})" />
+    <button class="btn-save-comment" onclick="saveEditComment(${taskId},${commentId})">✓</button>`;
+  textEl.replaceWith(wrap);
+  const inp = document.getElementById(`cedit-${commentId}`);
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function saveEditComment(taskId, commentId) {
+  const inp = document.getElementById(`cedit-${commentId}`);
+  const newText = inp?.value.trim();
+  if (!newText) return;
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  const c = t.comments.find(c => c.id === commentId);
+  if (!c) return;
+  c.text   = newText;
+  c.edited = true;
+  save();
+  const panel = document.getElementById(`tc-${taskId}`);
+  if (panel) panel.innerHTML = commentsInnerHTML(t);
+}
+
+function cancelEditComment(taskId, commentId) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  const panel = document.getElementById(`tc-${taskId}`);
+  if (panel) panel.innerHTML = commentsInnerHTML(t);
 }
 
 function fmtDateTime(iso) {
@@ -1837,6 +2179,9 @@ function doneTaskCard(t) {
   const pl = periodLabel(t);
   const searchEl = document.getElementById('doneSearch');
   const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const completedStr = t.completedDate
+    ? `<span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#4caf80">✅ ${t.completedDate}</span>`
+    : '';
   return `
   <div class="task-item done" data-taskid="${t.id}" data-priority="${t.priority}">
     <div class="task-check" onclick="toggleTask(${t.id})" title="Mark as incomplete">
@@ -1849,6 +2194,7 @@ function doneTaskCard(t) {
       <div class="task-meta">
         <span class="tag tag-${t.priority}">${t.priority === 'na' ? 'N/A' : t.priority}</span>
         <span class="period-badge ${t.period}">📅 ${esc(pl)}</span>
+        ${completedStr}
         <span class="task-time">${fmtTime(t.created)}</span>
       </div>
     </div>
@@ -1883,6 +2229,7 @@ function renderFilterBar() {
 // ═══════════════════════════════════════════════════
 function togglePopup(e, id) {
   e.stopPropagation();
+  closeAllMeta(id, 'period');
   closeAllPopups(id);
   const pp = document.getElementById(`pp-${id}`);
   if (!pp) return;
@@ -1929,7 +2276,10 @@ function closeAllPopups(except) {
   if (!except) openPopupId = null;
 }
 
-document.addEventListener('click', () => closeAllPopups());
+document.addEventListener('click', () => {
+  closeAllPopups();
+  document.querySelectorAll('.priority-popup.open').forEach(p => p.classList.remove('open'));
+});
 
 // ═══════════════════════════════════════════════════
 // DASHBOARD TIME CONTROLS
@@ -1945,12 +2295,12 @@ function setDashMode(mode, btn) {
   const nav = document.getElementById('dashNav');
   nav.style.display = mode === 'all' ? 'none' : 'flex';
 
-  // Month nav only for monthly mode (not used anymore since monthly shows full year table)
-  const showMonthNav = false; // monthly now shows full-year table, no month nav needed
-  ['dashMonthPrev','dashMonthLabel','dashMonthNext'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
+  // Show month selector only in monthly mode
+  const msel = document.getElementById('dashMonthSelect');
+  if (msel) {
+    msel.style.display = mode === 'monthly' ? '' : 'none';
+    msel.value = dashMonth;
+  }
 
   // Set year input
   const yi = document.getElementById('dashYearInput');
@@ -1973,8 +2323,12 @@ function navigateDash(dir) {
 function getDashTasks() {
   if (dashMode === 'all') return tasks;
   return tasks.filter(t => {
-    const d = new Date(t.created);
-    if (dashMode === 'monthly') return d.getFullYear() === dashYear;  // monthly = whole year table
+    // Use completedDate for done tasks, taskDate for active, fallback to created
+    const dateStr = t.done
+      ? (t.completedDate || t.taskDate || t.created?.slice(0, 10))
+      : (t.taskDate || t.created?.slice(0, 10));
+    const d = new Date(dateStr);
+    if (dashMode === 'monthly') return d.getFullYear() === dashYear;
     if (dashMode === 'yearly')  return d.getFullYear() === dashYear;
     return true;
   });
@@ -2002,13 +2356,20 @@ function renderDashboard() {
   const chartEl = document.getElementById('dashActivityChartWrap');
 
   if (dashMode === 'monthly') {
-    if (titleEl) titleEl.textContent = `Monthly Breakdown — ${dashYear}`;
+    if (titleEl) titleEl.textContent = `${MONTHS_FULL[dashMonth]} ${dashYear} — Day by Day`;
     if (tableEl) { tableEl.style.display = ''; renderMonthlyTable(tableEl); }
     if (chartEl) chartEl.style.display = 'none';
+    const dayWrap = document.getElementById('dashDayChartWrap');
+    const tableYear = document.getElementById('dashTableYear');
+    if (dayWrap) dayWrap.style.display = '';
+    if (tableYear) tableYear.textContent = dashYear;
+    renderDayChart();
   } else {
-    if (titleEl) titleEl.textContent = dashMode === 'yearly' ? `Activity — ${dashYear}` : 'Activity — All Time';
+    if (titleEl) titleEl.textContent = dashMode === 'yearly' ? `Tasks by Month — ${dashYear}` : 'Activity — All Time';
     if (tableEl) tableEl.style.display = 'none';
     if (chartEl) chartEl.style.display = '';
+    const dayWrap = document.getElementById('dashDayChartWrap');
+    if (dayWrap) dayWrap.style.display = 'none';
     renderActivityChart(ts);
   }
 
@@ -2097,7 +2458,7 @@ function renderMonthlyTable(container) {
 
   const rows = MONTHS_FULL.map((mName, m) => {
     const mTasks = tasks.filter(t => {
-      const d = new Date(t.created);
+      const d = new Date(taskEffectiveDate(t));
       return d.getFullYear() === dashYear && d.getMonth() === m;
     });
     const tot  = mTasks.length;
@@ -2152,6 +2513,55 @@ function renderMonthlyTable(container) {
     </table>`;
 }
 
+// ═══════════════════════════════════════════════════
+// DAY-BY-DAY CHART
+// ═══════════════════════════════════════════════════
+function renderDayChart() {
+  const el = document.getElementById('dashDayActivity');
+  if (!el) return;
+
+  const daysInMonth = new Date(dashYear, dashMonth + 1, 0).getDate();
+  const today = new Date();
+  const buckets = [];
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const done = tasks.filter(t => {
+      const ds = new Date(taskEffectiveDate(t));
+      return t.done && ds.getFullYear()===dashYear && ds.getMonth()===dashMonth && ds.getDate()===d;
+    }).length;
+    const active = tasks.filter(t => {
+      const ds = new Date(taskEffectiveDate(t));
+      return !t.done && ds.getFullYear()===dashYear && ds.getMonth()===dashMonth && ds.getDate()===d;
+    }).length;
+    // Label: show day number every 5 days, always show 1st
+    const isToday = today.getFullYear()===dashYear && today.getMonth()===dashMonth && today.getDate()===d;
+    const label = d===1 || d%5===0 ? String(d) : '';
+    buckets.push({ d, done, active, total: done+active, label, isToday });
+  }
+
+  const maxVal = Math.max(1, ...buckets.map(b => b.total));
+  const BAR_H  = 60;
+
+  el.innerHTML = buckets.map(b => {
+    const hDone   = Math.max(b.done   > 0 ? 3 : 0, Math.round((b.done   / maxVal) * BAR_H));
+    const hActive = Math.max(b.active > 0 ? 3 : 0, Math.round((b.active / maxVal) * BAR_H));
+    const todayStyle = b.isToday ? 'outline:1px solid var(--accent);outline-offset:1px;border-radius:3px;' : '';
+    return `<div class="activity-bar-wrap" title="Day ${b.d}: ${b.done} completed, ${b.active} active" style="${todayStyle}">
+      <div class="activity-bars">
+        <div class="activity-bar bar-done"   style="height:${hDone}px"></div>
+        <div class="activity-bar bar-active" style="height:${hActive}px"></div>
+      </div>
+      <div class="activity-bar-label">${b.isToday ? '•' : b.label}</div>
+    </div>`;
+  }).join('');
+}
+
+function taskEffectiveDate(t) {
+  return t.done
+    ? (t.completedDate || t.taskDate || t.created?.slice(0,10))
+    : (t.taskDate || t.created?.slice(0,10));
+}
+
 function renderActivityChart(ts) {
   const el    = document.getElementById('dashActivity');
   const title = document.getElementById('dashActivityTitle');
@@ -2159,55 +2569,62 @@ function renderActivityChart(ts) {
 
   let buckets = [];
 
-  if (dashMode === 'monthly') {
-    // Days in selected month
-    const daysInMonth = new Date(dashYear, dashMonth + 1, 0).getDate();
-    title.textContent = `Daily Activity — ${MONTHS[dashMonth]} ${dashYear}`;
-    for (let d = 1; d <= daysInMonth; d++) {
-      const cnt = ts.filter(t => {
-        const td = new Date(t.created);
-        return td.getFullYear()===dashYear && td.getMonth()===dashMonth && td.getDate()===d;
-      }).length;
-      buckets.push({ label: d % 5 === 1 || d === 1 ? String(d) : '', cnt });
-    }
-  } else if (dashMode === 'yearly') {
-    title.textContent = `Monthly Activity — ${dashYear}`;
+  const countBucket = (filterFn) => {
+    const done   = tasks.filter(t =>  t.done && filterFn(t)).length;
+    const active = tasks.filter(t => !t.done && filterFn(t)).length;
+    return { done, active, total: done + active };
+  };
+
+  if (dashMode === 'yearly') {
+    title.textContent = `Tasks by Month — ${dashYear}`;
     for (let m = 0; m < 12; m++) {
-      const cnt = ts.filter(t => {
-        const td = new Date(t.created);
+      const b = countBucket(t => {
+        const td = new Date(taskEffectiveDate(t));
         return td.getFullYear()===dashYear && td.getMonth()===m;
-      }).length;
-      buckets.push({ label: MONTHS[m], cnt });
+      });
+      buckets.push({ label: MONTHS[m], ...b });
     }
   } else {
-    // All time: group by year, or by month if span ≤ 24 months
-    const years = [...new Set(tasks.map(t => new Date(t.created).getFullYear()))].sort();
-    if (years.length === 0) { el.innerHTML = '<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.7rem">No data yet</div>'; return; }
-    title.textContent = years.length <= 2 ? 'Monthly Activity — All Time' : 'Yearly Activity — All Time';
-    if (years.length <= 2) {
-      // Show month by month
-      const minYear = years[0], maxYear = years[years.length-1];
+    // All time
+    const allYears = [...new Set(tasks.map(t => new Date(taskEffectiveDate(t)).getFullYear()).filter(y => !isNaN(y)))].sort();
+    if (allYears.length === 0) {
+      el.innerHTML = '<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.7rem">No data yet</div>';
+      return;
+    }
+    if (allYears.length <= 2) {
+      title.textContent = 'Monthly Activity — All Time';
+      const minYear = allYears[0], maxYear = allYears[allYears.length-1];
       for (let y = minYear; y <= maxYear; y++) {
         for (let m = 0; m < 12; m++) {
           if (y === maxYear && m > new Date().getMonth()) break;
-          const cnt = tasks.filter(t => { const td=new Date(t.created); return td.getFullYear()===y && td.getMonth()===m; }).length;
-          buckets.push({ label: MONTHS[m].slice(0,1)+(y!==minYear?'`'+String(y).slice(2):''), cnt });
+          const b = countBucket(t => {
+            const td = new Date(taskEffectiveDate(t));
+            return td.getFullYear()===y && td.getMonth()===m;
+          });
+          buckets.push({ label: MONTHS[m].slice(0,1)+(y!==minYear?'`'+String(y).slice(2):''), ...b });
         }
       }
     } else {
-      years.forEach(y => {
-        const cnt = tasks.filter(t => new Date(t.created).getFullYear()===y).length;
-        buckets.push({ label: String(y), cnt });
+      title.textContent = 'Yearly Activity — All Time';
+      allYears.forEach(y => {
+        const b = countBucket(t => new Date(taskEffectiveDate(t)).getFullYear()===y);
+        buckets.push({ label: String(y), ...b });
       });
     }
   }
 
-  const maxCnt = Math.max(1, ...buckets.map(b => b.cnt));
+  const maxVal = Math.max(1, ...buckets.map(b => b.total));
+  const BAR_H  = 64;
+
   el.innerHTML = buckets.map(b => {
-    const h = Math.max(2, Math.round((b.cnt / maxCnt) * 56));
-    const today = new Date();
-    return `<div class="activity-bar-wrap" title="${b.cnt} task${b.cnt!==1?'s':''}">
-      <div class="activity-bar${b.cnt>0?' has-done':''}" style="height:${h}px"></div>
+    const hDone   = Math.max(b.done   > 0 ? 3 : 0, Math.round((b.done   / maxVal) * BAR_H));
+    const hActive = Math.max(b.active > 0 ? 3 : 0, Math.round((b.active / maxVal) * BAR_H));
+    const tip = `${b.done} completed, ${b.active} active`;
+    return `<div class="activity-bar-wrap" title="${tip}">
+      <div class="activity-bars">
+        <div class="activity-bar bar-done"   style="height:${hDone}px"></div>
+        <div class="activity-bar bar-active" style="height:${hActive}px"></div>
+      </div>
       <div class="activity-bar-label">${b.label}</div>
     </div>`;
   }).join('');
