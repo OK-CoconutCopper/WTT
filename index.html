@@ -753,7 +753,75 @@ select option { background: var(--surface2); }
 .tag.clickable:hover { opacity: 0.82; }
 .tag.clickable::after { content: ' ▾'; font-size: 0.55rem; opacity: 0.6; }
 
-/* Comment edit */
+/* Threaded comments */
+.comment-thread { display: flex; flex-direction: column; gap: 0; }
+.comment-node { display: flex; flex-direction: column; }
+.comment-item {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 5px 0;
+}
+.comment-indent {
+  display: flex; gap: 0; flex-shrink: 0;
+}
+.comment-indent-bar {
+  width: 12px; flex-shrink: 0; position: relative;
+  border-left: 1.5px solid var(--border); margin-left: 5px;
+}
+.comment-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--surface3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; flex-shrink: 0; margin-top: 1px;
+}
+.comment-body { flex: 1; min-width: 0; }
+.comment-text {
+  font-family: 'Inter', sans-serif; font-size: 0.82rem;
+  font-variant-numeric: normal; line-height: 1.45;
+  color: var(--text); word-break: break-word;
+}
+.comment-footer {
+  display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap;
+}
+.comment-time {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; color: var(--muted);
+}
+.btn-del-comment, .btn-edit-comment {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.6rem; padding: 0 2px; line-height: 1; transition: color 0.18s;
+}
+.btn-del-comment:hover  { color: #e74c3c; }
+.btn-edit-comment:hover { color: var(--accent); }
+.btn-reply-comment {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.68rem; padding: 0 2px; line-height: 1; transition: color 0.18s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.btn-reply-comment:hover { color: #5dade2; }
+/* Reply input box */
+.comment-reply-box {
+  display: flex; gap: 6px; align-items: center;
+  padding: 6px 0 4px 0; margin-left: 0;
+}
+.comment-reply-input {
+  flex: 1; background: var(--surface3); border: 1px solid #5dade2;
+  border-radius: 7px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.8rem; font-variant-numeric: normal;
+  padding: 5px 10px; outline: none;
+}
+.btn-post-reply {
+  background: #5dade2; border: none; border-radius: 7px; color: #000;
+  font-size: 0.75rem; font-weight: 700; padding: 5px 12px; cursor: pointer;
+  white-space: nowrap;
+}
+.btn-post-reply:hover { background: #7ec8f0; }
+.btn-cancel-reply {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.7rem; padding: 0 4px;
+}
+.comment-reply-who {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
+  color: #5dade2; margin-bottom: 3px;
+}
 .comment-edit-wrap {
   display: flex; gap: 6px; align-items: center; margin-top: 2px;
 }
@@ -1802,30 +1870,182 @@ function activeTaskCard(t) {
 // ═══════════════════════════════════════════════════
 // COMMENTS
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// THREADED COMMENTS
+// ═══════════════════════════════════════════════════
+
 function commentsInnerHTML(t) {
   const comments = t.comments || [];
-  const listHtml = comments.length === 0
-    ? `<div class="no-comments">No comments yet…</div>`
-    : `<div class="comment-list">${comments.map(c => `
+
+  // Build tree: top-level first, then children
+  const roots    = comments.filter(c => !c.parentId);
+  const children = id => comments.filter(c => c.parentId === id);
+
+  function renderNode(c, depth) {
+    const isRoot   = !c.parentId;
+    const replyIcon = isRoot ? '↓' : '↩';
+    const replyTitle = isRoot ? 'Reply to this comment' : 'Reply to this reply';
+
+    // Indent bars
+    const bars = Array.from({ length: depth }, () =>
+      `<div class="comment-indent-bar"></div>`).join('');
+    const indentHtml = depth > 0 ? `<div class="comment-indent">${bars}</div>` : '';
+
+    const childNodes = children(c.id).map(ch => renderNode(ch, depth + 1)).join('');
+
+    return `
+      <div class="comment-node">
         <div class="comment-item" id="cmt-${c.id}">
+          ${indentHtml}
           <div class="comment-avatar">💬</div>
           <div class="comment-body">
             <div class="comment-text" id="ctxt-${c.id}">${esc(c.text)}</div>
             <div class="comment-footer">
               <span class="comment-time">${fmtDateTime(c.created)}</span>
-              <button class="btn-edit-comment" onclick="startEditComment(${t.id},${c.id})" title="Edit">✎</button>
-              <button class="btn-del-comment"  onclick="deleteComment(${t.id},${c.id})"    title="Delete">✕</button>
+              <button class="btn-reply-comment" onclick="showReplyBox(${t.id},${c.id},${depth})" title="${replyTitle}">${replyIcon}</button>
+              <button class="btn-edit-comment"  onclick="startEditComment(${t.id},${c.id})" title="Edit">✎</button>
+              <button class="btn-del-comment"   onclick="deleteComment(${t.id},${c.id})"    title="Delete">✕</button>
             </div>
           </div>
-        </div>`).join('')}
+        </div>
+        <div id="reply-box-${c.id}"></div>
+        ${childNodes}
       </div>`;
+  }
 
-  return `${listHtml}
+  const threadHtml = roots.length === 0
+    ? `<div class="no-comments">No comments yet…</div>`
+    : `<div class="comment-thread">${roots.map(c => renderNode(c, 0)).join('')}</div>`;
+
+  return `${threadHtml}
     <div class="comment-add">
       <input type="text" id="ci-${t.id}" placeholder="Add a comment…" maxlength="300"
              onkeydown="if(event.key==='Enter')addComment(${t.id})" />
       <button class="btn-post" onclick="addComment(${t.id})">Post</button>
     </div>`;
+}
+
+function showReplyBox(taskId, parentCommentId, depth) {
+  // Close any open reply boxes for this task first
+  document.querySelectorAll(`[id^="reply-box-"]`).forEach(el => el.innerHTML = '');
+
+  const box = document.getElementById(`reply-box-${parentCommentId}`);
+  if (!box) return;
+
+  const indentBars = Array.from({ length: depth + 1 }, () =>
+    `<div class="comment-indent-bar"></div>`).join('');
+  const indentHtml = `<div class="comment-indent">${indentBars}</div>`;
+
+  box.innerHTML = `
+    <div class="comment-item" style="padding-top:2px">
+      ${indentHtml}
+      <div class="comment-body">
+        <div class="comment-reply-box">
+          <input class="comment-reply-input" id="ri-${parentCommentId}"
+                 type="text" placeholder="Write a reply…" maxlength="300"
+                 onkeydown="if(event.key==='Enter')postReply(${taskId},${parentCommentId});if(event.key==='Escape')cancelReply(${parentCommentId})" />
+          <button class="btn-post-reply" onclick="postReply(${taskId},${parentCommentId})">↵ Reply</button>
+          <button class="btn-cancel-reply" onclick="cancelReply(${parentCommentId})">✕</button>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById(`ri-${parentCommentId}`)?.focus(), 30);
+}
+
+function postReply(taskId, parentCommentId) {
+  const inp  = document.getElementById(`ri-${parentCommentId}`);
+  const text = inp?.value.trim();
+  if (!text) { inp?.focus(); return; }
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  if (!t.comments) t.comments = [];
+  t.comments.push({ id: Date.now(), text, parentId: parentCommentId, created: new Date().toISOString() });
+  save();
+  refreshCommentPanel(t);
+}
+
+function cancelReply(parentCommentId) {
+  const box = document.getElementById(`reply-box-${parentCommentId}`);
+  if (box) box.innerHTML = '';
+}
+
+function addComment(taskId) {
+  const inp  = document.getElementById(`ci-${taskId}`);
+  const text = inp?.value.trim();
+  if (!text) { inp?.focus(); return; }
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  if (!t.comments) t.comments = [];
+  t.comments.push({ id: Date.now(), text, parentId: null, created: new Date().toISOString() });
+  save();
+  refreshCommentPanel(t);
+  setTimeout(() => document.getElementById(`ci-${taskId}`)?.focus(), 20);
+}
+
+function deleteComment(taskId, commentId) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t || !t.comments) return;
+  // Delete comment and all its descendants
+  const toDelete = new Set();
+  const collect = id => {
+    toDelete.add(id);
+    t.comments.filter(c => c.parentId === id).forEach(c => collect(c.id));
+  };
+  collect(commentId);
+  t.comments = t.comments.filter(c => !toDelete.has(c.id));
+  save();
+  refreshCommentPanel(t);
+}
+
+function refreshCommentPanel(t) {
+  const panel = document.getElementById(`tc-${t.id}`);
+  if (panel) panel.innerHTML = commentsInnerHTML(t);
+  const btn = document.querySelector(`[data-taskid="${t.id}"] .btn-comment`);
+  if (btn) {
+    const cnt = t.comments?.length || 0;
+    btn.textContent = cnt > 0 ? `💬 ${cnt}` : '💬 Comment';
+    btn.classList.toggle('has-comments', cnt > 0);
+  }
+}
+
+// ── Comment inline edit ──
+function startEditComment(taskId, commentId) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  const c = t.comments.find(c => c.id === commentId);
+  if (!c) return;
+  const textEl = document.getElementById(`ctxt-${commentId}`);
+  if (!textEl || textEl.querySelector('input')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'comment-edit-wrap';
+  wrap.innerHTML = `
+    <input class="comment-edit-input" id="cedit-${commentId}" type="text"
+           value="${esc(c.text)}" maxlength="300"
+           onkeydown="if(event.key==='Enter')saveEditComment(${taskId},${commentId});if(event.key==='Escape')cancelEditComment(${taskId},${commentId})" />
+    <button class="btn-save-comment" onclick="saveEditComment(${taskId},${commentId})">✓</button>`;
+  textEl.replaceWith(wrap);
+  const inp = document.getElementById(`cedit-${commentId}`);
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function saveEditComment(taskId, commentId) {
+  const inp = document.getElementById(`cedit-${commentId}`);
+  const newText = inp?.value.trim();
+  if (!newText) return;
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  const c = t.comments.find(c => c.id === commentId);
+  if (!c) return;
+  c.text   = newText;
+  c.edited = true;
+  save();
+  refreshCommentPanel(t);
+}
+
+function cancelEditComment(taskId) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  refreshCommentPanel(t);
 }
 
 function toggleComments(e, taskId) {
@@ -1839,42 +2059,6 @@ function toggleComments(e, taskId) {
     if (panel) panel.classList.add('open');
     if (item)  item.classList.add('comments-open');
     setTimeout(() => document.getElementById(`ci-${taskId}`)?.focus(), 50);
-  }
-}
-
-function addComment(taskId) {
-  const inp  = document.getElementById(`ci-${taskId}`);
-  const text = inp?.value.trim();
-  if (!text) { inp?.focus(); return; }
-  const t = tasks.find(t => t.id === taskId);
-  if (!t) return;
-  if (!t.comments) t.comments = [];
-  t.comments.push({ id: Date.now(), text, created: new Date().toISOString() });
-  save();
-  // Patch the panel in-place without full re-render
-  const panel = document.getElementById(`tc-${taskId}`);
-  if (panel) panel.innerHTML = commentsInnerHTML(t);
-  // Update badge
-  const btn = document.querySelector(`[data-taskid="${taskId}"] .btn-comment`);
-  if (btn) {
-    btn.textContent = `💬 ${t.comments.length}`;
-    btn.classList.add('has-comments');
-  }
-  // Re-focus input
-  setTimeout(() => document.getElementById(`ci-${taskId}`)?.focus(), 20);
-}
-
-function deleteComment(taskId, commentId) {
-  const t = tasks.find(t => t.id === taskId);
-  if (!t || !t.comments) return;
-  t.comments = t.comments.filter(c => c.id !== commentId);
-  save();
-  const panel = document.getElementById(`tc-${taskId}`);
-  if (panel) panel.innerHTML = commentsInnerHTML(t);
-  const btn = document.querySelector(`[data-taskid="${taskId}"] .btn-comment`);
-  if (btn) {
-    btn.textContent = t.comments.length > 0 ? `💬 ${t.comments.length}` : '💬 Comment';
-    btn.classList.toggle('has-comments', t.comments.length > 0);
   }
 }
 
@@ -1986,50 +2170,6 @@ function editTaskDate(e, taskId, field) {
   inp.addEventListener('blur',   commit);
   inp.addEventListener('keydown', ev => { if (ev.key === 'Escape') renderTasks(); });
 }
-function startEditComment(taskId, commentId) {
-  const t = tasks.find(t => t.id === taskId);
-  if (!t) return;
-  const c = t.comments.find(c => c.id === commentId);
-  if (!c) return;
-
-  const textEl = document.getElementById(`ctxt-${commentId}`);
-  if (!textEl) return;
-
-  // Replace text div with inline input
-  const wrap = document.createElement('div');
-  wrap.className = 'comment-edit-wrap';
-  wrap.innerHTML = `
-    <input class="comment-edit-input" id="cedit-${commentId}" type="text"
-           value="${esc(c.text)}" maxlength="300"
-           onkeydown="if(event.key==='Enter')saveEditComment(${taskId},${commentId});if(event.key==='Escape')cancelEditComment(${taskId},${commentId})" />
-    <button class="btn-save-comment" onclick="saveEditComment(${taskId},${commentId})">✓</button>`;
-  textEl.replaceWith(wrap);
-  const inp = document.getElementById(`cedit-${commentId}`);
-  if (inp) { inp.focus(); inp.select(); }
-}
-
-function saveEditComment(taskId, commentId) {
-  const inp = document.getElementById(`cedit-${commentId}`);
-  const newText = inp?.value.trim();
-  if (!newText) return;
-  const t = tasks.find(t => t.id === taskId);
-  if (!t) return;
-  const c = t.comments.find(c => c.id === commentId);
-  if (!c) return;
-  c.text   = newText;
-  c.edited = true;
-  save();
-  const panel = document.getElementById(`tc-${taskId}`);
-  if (panel) panel.innerHTML = commentsInnerHTML(t);
-}
-
-function cancelEditComment(taskId, commentId) {
-  const t = tasks.find(t => t.id === taskId);
-  if (!t) return;
-  const panel = document.getElementById(`tc-${taskId}`);
-  if (panel) panel.innerHTML = commentsInnerHTML(t);
-}
-
 function fmtDateTime(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
