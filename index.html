@@ -563,7 +563,51 @@ select option { background: var(--surface2); }
 }
 #doneSearchClear.visible, #taskSearchClear.visible { display: flex; }
 
-/* Task tab accordion groups (same style as done tab) */
+/* Criteria reassign popup on task card */
+.btn-reassign {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.72rem; padding: 0 3px; line-height: 1;
+  transition: color 0.18s; flex-shrink: 0;
+}
+.btn-reassign:hover { color: #5dade2; }
+.reassign-popup {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px; z-index: 500;
+  display: none; flex-direction: column; gap: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 200px;
+}
+.reassign-popup.open { display: flex; }
+.reassign-popup select {
+  font-size: 0.75rem; padding: 5px 8px; width: 100%;
+}
+.reassign-popup label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.58rem;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+}
+.btn-reassign-save {
+  background: var(--accent); border: none; border-radius: 7px; color: #000;
+  font-size: 0.72rem; font-weight: 700; padding: 5px 12px; cursor: pointer; width: 100%;
+}
+.btn-reassign-save:hover { background: #ffb83d; }
+
+/* Criteria name inline edit in criteria tab */
+.criteria-name-input {
+  font-size: 1rem; font-weight: 700; font-family: 'Syne', sans-serif;
+  background: var(--surface2); border: 1px solid var(--accent);
+  border-radius: 6px; color: var(--text); padding: 2px 8px;
+  outline: none; flex: 1;
+}
+.sub-name-input {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+  background: var(--surface2); border: 1px solid var(--accent);
+  border-radius: 5px; color: var(--text); padding: 2px 7px; outline: none;
+  max-width: 140px;
+}
+.criteria-name { cursor: pointer; }
+.criteria-name:hover { opacity: 0.75; }
+.sub-chip-name { cursor: pointer; }
+.sub-chip-name:hover { opacity: 0.75; }
 .task-group { margin-bottom: 10px; }
 .task-group-header {
   display: flex; align-items: center; gap: 8px;
@@ -1890,7 +1934,23 @@ function activeTaskCard(t) {
       </div>
       <div class="task-content">
         <div class="task-text" onclick="editTaskName(event,${t.id})" id="tname-${t.id}" title="Click to rename">${highlightMatch(t.text, query)}</div>
-        <div class="task-meta">
+        <div class="task-meta" style="position:relative">
+          <span class="btn-reassign" onclick="toggleReassign(event,${t.id})" title="Change criteria / sub-criteria">⇄</span>
+          <div class="reassign-popup" id="rp-${t.id}">
+            <div><label>Criteria</label>
+              <select id="rp-crit-${t.id}" onchange="updateReassignSub(${t.id})">
+                <option value="">— None —</option>
+                ${criteria.map(c=>`<option value="${c.id}"${t.criteriaId===c.id?' selected':''}>${esc(c.emoji)} ${esc(c.name)}</option>`).join('')}
+              </select>
+            </div>
+            <div><label>Sub-criteria</label>
+              <select id="rp-sub-${t.id}">
+                <option value="">— None —</option>
+                ${(criteria.find(c=>c.id===t.criteriaId)?.subcriteria||[]).map(s=>`<option value="${s.id}"${t.subcriteriaId===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}
+              </select>
+            </div>
+            <button class="btn-reassign-save" onclick="applyReassign(event,${t.id})">Apply</button>
+          </div>
           <span class="tag tag-${t.priority} clickable" onclick="togglePriorityPopup(event,${t.id})">${t.priority === 'na' ? 'N/A' : t.priority}</span>
           <div class="priority-popup" id="prip-${t.id}">
             <button class="priority-opt-btn opt-high"   onclick="setPriority(event,${t.id},'high')">🔴 High</button>
@@ -2221,6 +2281,54 @@ function setPriority(e, taskId, priority) {
 }
 
 // ── Task name inline edit ──
+// ── Reassign criteria / sub-criteria ──
+function toggleReassign(e, taskId) {
+  e.stopPropagation();
+  const pp = document.getElementById(`rp-${taskId}`);
+  if (!pp) return;
+  const isOpen = pp.classList.contains('open');
+  document.querySelectorAll('.reassign-popup.open').forEach(p => {
+    p.classList.remove('open');
+    const item = p.closest('.task-item');
+    if (item) item.style.zIndex = '';
+  });
+  document.querySelectorAll('.priority-popup.open').forEach(p => p.classList.remove('open'));
+  closeAllPopups();
+  if (!isOpen) {
+    pp.classList.add('open');
+    const item = pp.closest('.task-item');
+    if (item) item.style.zIndex = '50';
+  }
+}
+
+function updateReassignSub(taskId) {
+  const critSel = document.getElementById(`rp-crit-${taskId}`);
+  const subSel  = document.getElementById(`rp-sub-${taskId}`);
+  if (!critSel || !subSel) return;
+  const cid  = parseInt(critSel.value) || null;
+  const crit = criteria.find(c => c.id === cid);
+  subSel.innerHTML = `<option value="">— None —</option>` +
+    (crit?.subcriteria||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+}
+
+function applyReassign(e, taskId) {
+  e.stopPropagation();
+  const t = tasks.find(t => t.id === taskId);
+  if (!t) return;
+  const critSel = document.getElementById(`rp-crit-${taskId}`);
+  const subSel  = document.getElementById(`rp-sub-${taskId}`);
+  t.criteriaId    = parseInt(critSel?.value) || null;
+  t.subcriteriaId = parseInt(subSel?.value)  || null;
+  save();
+  document.querySelectorAll('.reassign-popup.open').forEach(p => {
+    p.classList.remove('open');
+    const item = p.closest('.task-item');
+    if (item) item.style.zIndex = '';
+  });
+  renderTasks();
+  if (currentView === 'completed') renderCompleted();
+}
+
 function editTaskName(e, taskId) {
   e.stopPropagation();
   const nameEl = document.getElementById(`tname-${taskId}`);
@@ -2572,6 +2680,11 @@ function closeAllPopups(except) {
 document.addEventListener('click', () => {
   closeAllPopups();
   document.querySelectorAll('.priority-popup.open').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.reassign-popup.open').forEach(p => {
+    p.classList.remove('open');
+    const item = p.closest('.task-item');
+    if (item) item.style.zIndex = '';
+  });
 });
 
 // ═══════════════════════════════════════════════════
@@ -2952,14 +3065,14 @@ function renderCriteria() {
     <div class="criteria-card" data-cid="${c.id}">
       <div class="criteria-card-header">
         <span class="criteria-emoji">${esc(c.emoji)}</span>
-        <span class="criteria-name">${esc(c.name)}</span>
+        <span class="criteria-name" id="cname-${c.id}" onclick="editCriteriaName(${c.id})" title="Click to rename">${esc(c.name)}</span>
         <span class="criteria-meta">${taskCount} task${taskCount!==1?'s':''}</span>
         <button class="btn-icon del" onclick="deleteCriteria(${c.id})" title="Delete">✕</button>
       </div>
       <div class="subcriteria-list">
         ${c.subcriteria.map(s => `
           <span class="sub-chip">
-            ${esc(s.name)}
+            <span class="sub-chip-name" id="sname-${c.id}-${s.id}" onclick="editSubName(${c.id},${s.id})" title="Click to rename">${esc(s.name)}</span>
             <button class="del-sub" onclick="deleteSubcriteria(${c.id},${s.id})" title="Remove">×</button>
           </span>`).join('')}
         ${c.subcriteria.length===0 ? '<span style="font-family:JetBrains Mono,monospace;font-size:0.6rem;color:var(--muted)">No sub-criteria yet</span>' : ''}
@@ -2987,10 +3100,13 @@ function addCriteria() {
 }
 
 function deleteCriteria(id) {
-  if (tasks.some(t=>t.criteriaId===id)) {
-    if (!confirm('Some tasks use this criteria. Delete anyway? Tasks will become unassigned.')) return;
-    tasks.forEach(t => { if (t.criteriaId===id) { t.criteriaId=null; t.subcriteriaId=null; } });
-  }
+  const c = criteria.find(x=>x.id===id);
+  const used = tasks.filter(t=>t.criteriaId===id).length;
+  const msg = used > 0
+    ? `Delete "${c?.name}"? ${used} task${used!==1?'s':''} will become unassigned.`
+    : `Delete "${c?.name}"? This cannot be undone.`;
+  if (!confirm(msg)) return;
+  tasks.forEach(t => { if (t.criteriaId===id) { t.criteriaId=null; t.subcriteriaId=null; } });
   criteria = criteria.filter(c=>c.id!==id);
   save(); populateCriteriaSelect(); renderCriteria(); renderTasks(); updateGlobalStats();
 }
@@ -3008,11 +3124,67 @@ function addSub(cid) {
 
 function deleteSubcriteria(cid, sid) {
   const c = criteria.find(x=>x.id===cid);
-  if (c) {
-    c.subcriteria = c.subcriteria.filter(s=>s.id!==sid);
-    tasks.forEach(t => { if (t.subcriteriaId===sid) t.subcriteriaId=null; });
-    save(); populateCriteriaSelect(); renderCriteria(); renderTasks();
-  }
+  if (!c) return;
+  const s = c.subcriteria.find(x=>x.id===sid);
+  const used = tasks.filter(t=>t.subcriteriaId===sid).length;
+  const msg = used > 0
+    ? `Delete "${s?.name}"? ${used} task${used!==1?'s':''} will lose this sub-criteria.`
+    : `Delete "${s?.name}"?`;
+  if (!confirm(msg)) return;
+  c.subcriteria = c.subcriteria.filter(s=>s.id!==sid);
+  tasks.forEach(t => { if (t.subcriteriaId===sid) t.subcriteriaId=null; });
+  save(); populateCriteriaSelect(); renderCriteria(); renderTasks();
+}
+
+// ── Criteria & sub-criteria inline name edit ──
+function editCriteriaName(cid) {
+  const span = document.getElementById(`cname-${cid}`);
+  if (!span || span.querySelector('input')) return;
+  const c = criteria.find(x=>x.id===cid);
+  if (!c) return;
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.className = 'criteria-name-input';
+  inp.value = c.name; inp.maxLength = 40;
+  inp.onkeydown = e => {
+    if (e.key === 'Enter') saveCriteriaName(cid, inp.value);
+    if (e.key === 'Escape') renderCriteria();
+  };
+  inp.onblur = () => saveCriteriaName(cid, inp.value);
+  span.replaceWith(inp);
+  inp.focus(); inp.select();
+}
+
+function saveCriteriaName(cid, val) {
+  const name = val.trim();
+  if (!name) { renderCriteria(); return; }
+  const c = criteria.find(x=>x.id===cid);
+  if (c) { c.name = name; save(); populateCriteriaSelect(); renderCriteria(); renderTasks(); }
+}
+
+function editSubName(cid, sid) {
+  const span = document.getElementById(`sname-${cid}-${sid}`);
+  if (!span || span.querySelector('input')) return;
+  const c = criteria.find(x=>x.id===cid);
+  const s = c?.subcriteria.find(x=>x.id===sid);
+  if (!s) return;
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.className = 'sub-name-input';
+  inp.value = s.name; inp.maxLength = 40;
+  inp.onkeydown = e => {
+    if (e.key === 'Enter') saveSubName(cid, sid, inp.value);
+    if (e.key === 'Escape') renderCriteria();
+  };
+  inp.onblur = () => saveSubName(cid, sid, inp.value);
+  span.replaceWith(inp);
+  inp.focus(); inp.select();
+}
+
+function saveSubName(cid, sid, val) {
+  const name = val.trim();
+  if (!name) { renderCriteria(); return; }
+  const c = criteria.find(x=>x.id===cid);
+  const s = c?.subcriteria.find(x=>x.id===sid);
+  if (s) { s.name = name; save(); populateCriteriaSelect(); renderCriteria(); renderTasks(); }
 }
 
 // ═══════════════════════════════════════════════════
