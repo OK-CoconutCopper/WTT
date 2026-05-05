@@ -2237,6 +2237,7 @@ function editTaskName(e, taskId) {
     `if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTaskName(${taskId},this)}` +
     `if(event.key==='Escape')cancelTaskName(${taskId})`);
   ta.setAttribute('oninput', 'autoResize(this)');
+  ta.setAttribute('onblur', `saveTaskName(${taskId},this)`);
   nameEl.replaceWith(ta);
   autoResize(ta);
   ta.focus();
