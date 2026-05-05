@@ -2411,28 +2411,41 @@ function doneTaskCard(t) {
   const completedStr = t.completedDate
     ? `<span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#4caf80">✅ ${t.completedDate}</span>`
     : '';
+  const comments = t.comments || [];
+  const cCount   = comments.length;
+  const commentsOpen = openComments.has(t.id);
+
   return `
-  <div class="task-item done" data-taskid="${t.id}" data-priority="${t.priority}">
-    <div class="task-check" onclick="toggleTask(${t.id})" title="Mark as incomplete">
-      <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-        <path d="M1 4l3 3.5L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="task-content">
-      <div class="task-text">${highlightMatch(t.text, query)}</div>
-      <div class="task-meta">
-        <span class="tag tag-${t.priority}">${t.priority === 'na' ? 'N/A' : t.priority}</span>
-        <span class="period-badge ${t.period}">📅 ${esc(pl)}</span>
-        ${completedStr}
-        <span class="task-time">${fmtTime(t.created)}</span>
+  <div class="task-card">
+    <div class="task-item done${commentsOpen ? ' comments-open' : ''}" data-taskid="${t.id}" data-priority="${t.priority}">
+      <div class="task-check" onclick="toggleTask(${t.id})" title="Mark as incomplete">
+        <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+          <path d="M1 4l3 3.5L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
+      <div class="task-content">
+        <div class="task-text">${highlightMatch(t.text, query)}</div>
+        <div class="task-meta">
+          <span class="tag tag-${t.priority}">${t.priority === 'na' ? 'N/A' : t.priority}</span>
+          <span class="period-badge ${t.period}">📅 ${esc(pl)}</span>
+          ${completedStr}
+          <button class="btn-comment${cCount > 0 ? ' has-comments' : ''}"
+                  onclick="toggleComments(event,${t.id})">
+            💬 ${cCount > 0 ? cCount : 'Comment'}
+          </button>
+          <span class="task-time">${fmtTime(t.created)}</span>
+        </div>
+      </div>
+      <button class="btn-undo" onclick="toggleTask(${t.id})" title="Mark as incomplete">↩ Undo</button>
+      <button class="btn-delete" onclick="deleteTask(${t.id})" title="Delete">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+          <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
-    <button class="btn-undo" onclick="toggleTask(${t.id})" title="Mark as incomplete">↩ Undo</button>
-    <button class="btn-delete" onclick="deleteTask(${t.id})" title="Delete">
-      <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-        <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
-    </button>
+    <div class="task-comments${commentsOpen ? ' open' : ''}" id="tc-${t.id}">
+      ${commentsInnerHTML(t)}
+    </div>
   </div>`;
 }
 
