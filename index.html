@@ -1903,7 +1903,7 @@ function activeTaskCard(t) {
           <button class="btn-toggle-dates" onclick="toggleTaskDates(event,${t.id})" id="tdb-${t.id}" style="${(t.taskDate||t.completedDate)?'color:var(--accent)':''}">📅 dates</button>
           <span class="task-time">${fmtTime(t.created)}</span>
         </div>
-        <div class="task-date-row" id="tdr-${t.id}" style="display:${(t.taskDate||t.completedDate)?'flex':'none'}">
+        <div class="task-date-row" id="tdr-${t.id}" style="display:none">
           <div class="task-date-field">
             <span class="task-date-label">📌 Task</span>
             <span class="task-date-val${!t.taskDate?' empty':''}"
