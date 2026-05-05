@@ -376,7 +376,7 @@ select option { background: var(--surface2); }
 .task-item.done .task-check svg { display: block; }
 
 .task-content { flex: 1; min-width: 0; }
-.task-text { font-size: 0.93rem; font-weight: 600; line-height: 1.4; margin-bottom: 6px; word-break: break-word; }
+.task-text { font-family: 'Inter', sans-serif; font-size: 0.93rem; font-weight: 500; font-variant-numeric: normal; line-height: 1.4; margin-bottom: 6px; word-break: break-word; }
 
 .task-meta {
   display: flex;
@@ -518,8 +518,8 @@ select option { background: var(--surface2); }
 .done-search-inner:focus-within { border-color: var(--accent); }
 .done-search-inner input {
   flex: 1; background: none; border: none; outline: none;
-  color: var(--text); font-family: 'Syne', sans-serif; font-size: 0.88rem;
-  padding: 0;
+  color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.88rem;
+  font-variant-numeric: normal; padding: 0;
 }
 .done-search-inner input::placeholder { color: var(--muted); }
 #doneSearchClear {
@@ -818,8 +818,8 @@ select option { background: var(--surface2); }
 }
 .comment-add input {
   flex: 1; background: var(--surface3); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--text); font-family: 'Syne', sans-serif;
-  font-size: 0.82rem; padding: 7px 11px; outline: none; transition: border-color 0.2s;
+  border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.82rem; font-variant-numeric: normal; padding: 7px 11px; outline: none; transition: border-color 0.2s;
 }
 .comment-add input:focus { border-color: var(--accent); }
 .comment-add input::placeholder { color: var(--muted); }
