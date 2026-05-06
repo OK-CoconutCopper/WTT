@@ -346,6 +346,25 @@ select option { background: var(--surface2); }
   font-weight: 600; padding: 8px 14px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
 .btn-archive-year:hover { background: rgba(231,76,60,0.1); }
+/* Compare panel */
+.report-compare-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+}
+.report-compare-legend {
+  display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.report-compare-tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; padding: 2px 8px;
+  border-radius: 4px;
+}
+.report-compare-tag.added   { color: #4caf80; background: rgba(76,175,128,0.1); border: 1px solid rgba(76,175,128,0.2); }
+.report-compare-tag.removed { color: #e74c3c; background: rgba(231,76,60,0.1);  border: 1px solid rgba(231,76,60,0.2); }
+.report-compare-tag.same    { color: var(--muted); }
+.diff-line-added   { color: #4caf80; display: block; }
+.diff-line-removed { color: #e74c3c; text-decoration: line-through; opacity: 0.7; display: block; }
+.diff-line-same    { color: var(--muted); display: block; }
+
 .report-week-item {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; margin-bottom: 8px; overflow: hidden;
@@ -1434,17 +1453,16 @@ select option { background: var(--surface2); }
 /* Bar chart */
 .bar-chart { display: flex; flex-direction: column; gap: 10px; }
 .bar-row { display: flex; flex-direction: column; gap: 5px; }
-.bar-label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.bar-label { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .bar-name {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
+  white-space: normal;
+  word-break: break-word;
+  flex: 1;
 }
 .bar-val {
   font-family: 'Outfit', sans-serif;
@@ -1736,7 +1754,16 @@ select option { background: var(--surface2); }
         <div class="report-subtitle">Edit notes → ⚡ Generate → review highlights → 📋 Copy</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0">
-        <button class="btn-save-week" onclick="saveWeekLog()">💾 Save Week</button>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button class="btn-save-week" onclick="saveWeekLog()">💾 Save Week</button>
+          <button class="btn-save-week" onclick="toggleCustomWeekDate()" title="Save for a past week" style="padding:8px;font-size:0.8rem">📅</button>
+        </div>
+        <div id="customWeekDateWrap" style="display:none;align-items:center;gap:6px">
+          <input type="date" id="customWeekDate" class="dash-year-input" style="width:140px"
+                 value="" title="Pick the week's date" />
+          <button class="btn-save-week" onclick="saveWeekLogCustom()">Save</button>
+          <button class="btn-save-week" onclick="toggleCustomWeekDate()" style="color:#e74c3c;border-color:#e74c3c">✕</button>
+        </div>
         <button class="btn-gen-report" onclick="generateReport()">⚡ Generate</button>
         <button class="btn-archive-year" onclick="archiveYear()" title="Export all weekly reports to .txt then clear history">📦 Archive Year</button>
       </div>
@@ -1755,9 +1782,40 @@ select option { background: var(--surface2); }
     <!-- Weekly History -->
     <div id="reportHistory" style="margin-top:24px;display:none">
       <div class="report-output-header">
-        <span class="report-output-label">📚 Report History</span>
+        <span class="report-output-label">I know what I did last week 😏</span>
         <span class="report-output-label" id="reportStorageInfo" style="color:var(--muted)"></span>
       </div>
+
+      <!-- Compare panel -->
+      <div class="report-compare-bar" id="reportCompareBar" style="display:none">
+        <span class="report-output-label" style="white-space:nowrap">Compare:</span>
+        <select class="dash-year-input" id="compareWeekA" style="flex:1;font-size:0.65rem" onchange="renderCompare()">
+          <option value="">— Base week —</option>
+        </select>
+        <span class="report-output-label">→</span>
+        <select class="dash-year-input" id="compareWeekB" style="flex:1;font-size:0.65rem" onchange="renderCompare()">
+          <option value="">— Base week —</option>
+        </select>
+        <button class="btn-week-copy" onclick="clearCompare()" style="white-space:nowrap">✕ Clear</button>
+      </div>
+      <div id="compareWarnSwap" style="display:none;align-items:center;gap:8px;margin-bottom:10px;
+           padding:8px 12px;background:rgba(240,165,0,0.1);border:1px solid rgba(240,165,0,0.25);border-radius:8px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#f0a500">
+          ⚠️ Base week is newer — did you mean to swap them?
+        </span>
+        <button class="btn-week-copy" onclick="swapCompareWeeks()" style="border-color:#f0a500;color:#f0a500;white-space:nowrap">
+          ↔ Swap
+        </button>
+      </div>
+      <div id="reportCompareOutput" style="display:none">
+        <div class="report-compare-legend">
+          <span class="report-compare-tag added">🟢 Changed / Added</span>
+          <span class="report-compare-tag removed">🔴 Removed</span>
+          <span class="report-compare-tag same">— Unchanged</span>
+        </div>
+        <div class="report-week-text" id="reportCompareDiff" style="border:1px solid var(--border);border-radius:10px;margin-bottom:16px"></div>
+      </div>
+
       <div id="reportHistoryList"></div>
     </div>
   </div>
@@ -2981,6 +3039,60 @@ function deleteBullet(cid, sid, idx) {
 
 // ── Weekly logs ──
 
+function toggleCustomWeekDate() {
+  const wrap = document.getElementById('customWeekDateWrap');
+  if (!wrap) return;
+  const isOpen = wrap.style.display === 'flex';
+  wrap.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) {
+    // Default to last Monday
+    const d = new Date();
+    d.setDate(d.getDate() - (d.getDay() === 0 ? 6 : d.getDay() - 1) - 7);
+    document.getElementById('customWeekDate').value = d.toISOString().slice(0,10);
+  }
+}
+
+function getWeekLabelFromDate(dateStr) {
+  const d = new Date(dateStr);
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `W${String(week).padStart(2,'0')} ${d.getFullYear()}`;
+}
+
+function saveWeekLogCustom() {
+  const dateInput = document.getElementById('customWeekDate');
+  const dateStr   = dateInput?.value;
+  if (!dateStr) { showToast('⚠️ Please pick a date.'); return; }
+
+  const label = getWeekLabelFromDate(dateStr);
+  const d     = new Date(dateStr);
+  const dateDisplay = d.toLocaleDateString([], { year:'numeric', month:'short', day:'numeric' });
+
+  const ta   = document.getElementById('reportText');
+  const text = ta?.value?.trim();
+
+  if (!text) {
+    showToast('⚠️ Generate the report first before saving.');
+    return;
+  }
+
+  if (!weeklyLogs.history) weeklyLogs.history = [];
+
+  // Warn if overwriting
+  const existing = weeklyLogs.history.find(l => l.label === label);
+  if (existing && !confirm(`A report for ${label} already exists. Overwrite it?`)) return;
+
+  weeklyLogs.history = weeklyLogs.history.filter(l => l.label !== label);
+  weeklyLogs.history.unshift({ label, date: dateDisplay, text });
+  // Sort by label descending so newest is first
+  weeklyLogs.history.sort((a, b) => b.label.localeCompare(a.label));
+
+  save();
+  renderReportHistory();
+  toggleCustomWeekDate();
+  showToast(`💾 Saved as ${label} (${dateDisplay})`);
+}
+
 function getWeekLabel() {
   const d = new Date();
   const jan1 = new Date(d.getFullYear(), 0, 1);
@@ -3050,22 +3162,28 @@ function renderReportHistory() {
   const hist    = document.getElementById('reportHistory');
   const listEl  = document.getElementById('reportHistoryList');
   const infoEl  = document.getElementById('reportStorageInfo');
+  const compBar = document.getElementById('reportCompareBar');
   if (!hist || !listEl) return;
 
   const logs = weeklyLogs.history || [];
-  if (logs.length === 0) {
-    hist.style.display = 'none';
-    return;
-  }
+  if (logs.length === 0) { hist.style.display = 'none'; return; }
   hist.style.display = '';
 
-  // Storage estimate
+  // Show compare bar only if 2+ weeks
+  if (compBar) compBar.style.display = logs.length >= 2 ? 'flex' : 'none';
+
+  // Populate compare dropdowns
+  const optHtml = logs.map((l, i) => `<option value="${i}">${esc(l.label)} — ${esc(l.date)}</option>`).join('');
+  const selA = document.getElementById('compareWeekA');
+  const selB = document.getElementById('compareWeekB');
+  if (selA) selA.innerHTML = `<option value="">— Base week —</option>${optHtml}`;
+  if (selB) selB.innerHTML = `<option value="">— New week —</option>${optHtml}`;
+
   const totalChars = logs.reduce((s, l) => s + l.text.length, 0);
   const kb   = (totalChars / 1024).toFixed(1);
-  const pct  = Math.min(100, Math.round(totalChars / (100 * 1024) * 100)); // ~100KB reference
+  const pct  = Math.min(100, Math.round(totalChars / (100 * 1024) * 100));
   const fillClass = pct > 75 ? 'danger' : pct > 50 ? 'warn' : '';
-
-  if (infoEl) infoEl.textContent = `${logs.length} weeks · ${kb} KB used`;
+  if (infoEl) infoEl.textContent = `${logs.length} weeks · ${kb} KB`;
 
   listEl.innerHTML = `
     <div style="font-family:JetBrains Mono,monospace;font-size:0.58rem;color:var(--muted);margin-bottom:4px">
@@ -3096,8 +3214,90 @@ function renderReportHistory() {
   `;
 }
 
+function renderCompare() {
+  const selA  = document.getElementById('compareWeekA');
+  const selB  = document.getElementById('compareWeekB');
+  const outEl = document.getElementById('reportCompareOutput');
+  const diff  = document.getElementById('reportCompareDiff');
+  if (!selA || !selB || !outEl || !diff) return;
+
+  const idxA = selA.value;
+  const idxB = selB.value;
+  if (idxA === '' || idxB === '') { outEl.style.display = 'none'; return; }
+  if (idxA === idxB) { showToast('⚠️ Pick two different weeks.'); return; }
+
+  const logs = weeklyLogs.history || [];
+  const logA = logs[parseInt(idxA)];
+  const logB = logs[parseInt(idxB)];
+  if (!logA || !logB) return;
+
+  // Check if base is newer than new week
+  const warnEl = document.getElementById('compareWarnSwap');
+  if (logA.label > logB.label) {
+    if (warnEl) warnEl.style.display = 'flex';
+  } else {
+    if (warnEl) warnEl.style.display = 'none';
+  }
+
+  const linesA = logA.text.split('\n');
+  const linesB = logB.text.split('\n');
+  const diffLines = computeDiff(linesA, linesB);
+
+  diff.innerHTML = diffLines.map(d => {
+    const txt = esc(d.text) || '&nbsp;';
+    if (d.type === 'added')   return `<span class="diff-line-added">+ ${txt}</span>`;
+    if (d.type === 'removed') return `<span class="diff-line-removed">- ${txt}</span>`;
+    return `<span class="diff-line-same">  ${txt}</span>`;
+  }).join('');
+
+  outEl.style.display = '';
+  outEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function swapCompareWeeks() {
+  const selA = document.getElementById('compareWeekA');
+  const selB = document.getElementById('compareWeekB');
+  if (!selA || !selB) return;
+  const tmp  = selA.value;
+  selA.value = selB.value;
+  selB.value = tmp;
+  renderCompare();
+}
+
+function computeDiff(linesA, linesB) {
+  // LCS-based diff
+  const m = linesA.length, n = linesB.length;
+  const dp = Array.from({length: m+1}, () => new Array(n+1).fill(0));
+  for (let i = m-1; i >= 0; i--)
+    for (let j = n-1; j >= 0; j--)
+      dp[i][j] = linesA[i] === linesB[j]
+        ? dp[i+1][j+1] + 1
+        : Math.max(dp[i+1][j], dp[i][j+1]);
+
+  const result = [];
+  let i = 0, j = 0;
+  while (i < m || j < n) {
+    if (i < m && j < n && linesA[i] === linesB[j]) {
+      result.push({ type: 'same', text: linesA[i] }); i++; j++;
+    } else if (j < n && (i >= m || dp[i][j+1] >= dp[i+1][j])) {
+      result.push({ type: 'added', text: linesB[j] }); j++;
+    } else {
+      result.push({ type: 'removed', text: linesA[i] }); i++;
+    }
+  }
+  return result;
+}
+
+function clearCompare() {
+  const selA  = document.getElementById('compareWeekA');
+  const selB  = document.getElementById('compareWeekB');
+  const outEl = document.getElementById('reportCompareOutput');
+  if (selA) selA.value = '';
+  if (selB) selB.value = '';
+  if (outEl) outEl.style.display = 'none';
+}
+
 function toggleWeekItem(i) {
-  const el = document.getElementById(`rwi-${i}`);
   if (el) el.classList.toggle('open');
 }
 
