@@ -302,7 +302,273 @@ select option { background: var(--surface2); }
   white-space: nowrap; align-self: center;
 }
 
-/* ── Add Task Form ── */
+.report-offset-row {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.report-offset-field {
+  display: flex; align-items: center; gap: 5px;
+}
+.report-offset-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+  color: var(--muted); white-space: nowrap;
+}
+.report-offset-input {
+  width: 54px; text-align: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700;
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--accent); padding: 4px 6px; outline: none;
+  transition: border-color 0.18s;
+}
+.report-offset-input:focus { border-color: var(--accent); }
+.report-offset-preview {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  color: var(--muted); padding: 2px 8px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 5px;
+}
+  opacity: 0.4; border-style: dashed;
+}
+.report-include-toggle {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  font-weight: 700; cursor: pointer; user-select: none;
+  padding: 3px 10px; border-radius: 6px; transition: all 0.18s;
+  border: 1px solid var(--border); color: var(--muted);
+}
+.report-include-toggle.on {
+  border-color: #4caf80; color: #4caf80; background: rgba(76,175,128,0.08);
+}
+.report-include-toggle input { display: none; }
+
+.btn-archive-year {
+  background: none; border: 1px solid #e74c3c; border-radius: 9px;
+  color: #e74c3c; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  font-weight: 600; padding: 8px 14px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.btn-archive-year:hover { background: rgba(231,76,60,0.1); }
+.report-week-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; margin-bottom: 8px; overflow: hidden;
+}
+.report-week-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer; user-select: none;
+  transition: background 0.18s;
+}
+.report-week-header:hover { background: var(--surface2); }
+.report-week-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  font-weight: 700; color: var(--text); flex: 1;
+}
+.report-week-date {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.58rem;
+  color: var(--muted);
+}
+.report-week-size {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
+  color: var(--muted); background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px;
+}
+.btn-del-week {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.7rem; padding: 2px 5px; transition: color 0.18s; flex-shrink: 0;
+}
+.btn-del-week:hover { color: #e74c3c; }
+.report-week-chevron {
+  font-size: 0.58rem; color: var(--muted);
+  transition: transform 0.22s; flex-shrink: 0;
+}
+.report-week-item.open .report-week-chevron { transform: rotate(90deg); }
+.report-week-body { display: none; border-top: 1px solid var(--border); }
+.report-week-item.open .report-week-body { display: block; }
+.report-week-text {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+  line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+  padding: 12px 16px; color: var(--text); max-height: 320px;
+  overflow-y: auto;
+}
+.report-week-actions {
+  display: flex; gap: 8px; padding: 8px 14px 12px;
+  border-top: 1px solid var(--border); background: var(--surface2);
+}
+.btn-week-copy {
+  background: none; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--muted); font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem; padding: 5px 12px; cursor: pointer; transition: all 0.18s;
+}
+.btn-week-copy:hover { border-color: var(--accent); color: var(--accent); }
+.report-storage-bar {
+  height: 4px; background: var(--border); border-radius: 2px;
+  margin: 6px 0 16px; overflow: hidden;
+}
+.report-storage-fill {
+  height: 100%; border-radius: 2px; background: #4caf80;
+  transition: width 0.4s ease;
+}
+.report-storage-fill.warn { background: #f0a500; }
+.report-storage-fill.danger { background: #e74c3c; }
+.report-toolbar {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.report-title {
+  font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 2px;
+}
+.report-subtitle {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--muted);
+}
+.btn-gen-report {
+  background: var(--accent); border: none; border-radius: 9px; color: #000;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 700;
+  padding: 8px 16px; cursor: pointer; transition: background 0.2s; white-space: nowrap;
+}
+.btn-gen-report:hover { background: #ffb83d; }
+.btn-copy-report {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 9px;
+  color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  font-weight: 600; padding: 8px 14px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.btn-copy-report:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Report editor blocks */
+.report-crit-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; margin-bottom: 12px; overflow: hidden;
+}
+.report-crit-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; user-select: none;
+}
+.report-crit-icon { font-size: 1.1rem; }
+.report-crit-name {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); flex: 1;
+}
+.report-crit-chevron {
+  font-size: 0.6rem; color: var(--muted); transition: transform 0.22s;
+}
+.report-crit-block.open .report-crit-chevron { transform: rotate(90deg); }
+.report-crit-body { display: none; padding: 12px 14px; display: flex; flex-direction: column; gap: 14px; }
+
+/* Sub-criteria editor row */
+.report-sub-block {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 12px;
+}
+.report-sub-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.report-sub-name {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+  font-weight: 700; color: var(--text); flex: 1;
+}
+.report-task-count {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+  color: #4caf80; background: rgba(76,175,128,0.1);
+  border: 1px solid rgba(76,175,128,0.2); border-radius: 5px; padding: 2px 7px;
+}
+.report-toggle-row {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;
+}
+.report-toggle {
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted);
+  user-select: none;
+}
+.report-toggle input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+.report-toggle.active-toggle { color: var(--accent); }
+
+.report-note-input {
+  width: 100%; background: var(--surface3); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.82rem; padding: 7px 10px; outline: none; resize: none;
+  transition: border-color 0.2s; min-height: 36px; line-height: 1.4;
+  box-sizing: border-box;
+}
+.report-note-input:focus { border-color: var(--accent); }
+.report-note-input::placeholder { color: var(--muted); }
+.report-bullets-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.58rem;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em;
+  margin: 8px 0 5px;
+}
+.report-bullet-row {
+  display: flex; gap: 6px; align-items: flex-start; margin-bottom: 5px;
+}
+.report-bullet-prefix {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+  color: var(--muted); padding-top: 8px; flex-shrink: 0;
+}
+.report-bullet-input {
+  flex: 1; background: var(--surface3); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.8rem; padding: 6px 9px; outline: none; resize: none;
+  transition: border-color 0.2s; min-height: 32px; line-height: 1.4;
+}
+.report-bullet-input:focus { border-color: var(--accent); }
+.report-bullet-noupdate {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
+  color: var(--muted); cursor: pointer; padding-top: 9px; flex-shrink: 0;
+  white-space: nowrap;
+}
+.report-bullet-noupdate.on { color: var(--accent); }
+.btn-del-bullet {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.7rem; padding: 7px 2px; transition: color 0.18s;
+}
+.btn-del-bullet:hover { color: #e74c3c; }
+.btn-add-bullet {
+  background: none; border: 1px dashed var(--border); border-radius: 6px;
+  color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+  padding: 5px 12px; cursor: pointer; transition: all 0.2s; margin-top: 4px; width: 100%;
+}
+.btn-add-bullet:hover { border-color: var(--accent); color: var(--accent); }
+
+/* No update toggle */
+.report-noupdate-toggle {
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.58rem;
+  color: var(--muted); user-select: none;
+}
+.report-noupdate-toggle.on { color: var(--accent); }
+.report-noupdate-toggle input { accent-color: var(--accent); cursor: pointer; }
+
+.btn-save-week {
+  background: none; border: 1px solid var(--border); border-radius: 9px;
+  color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  font-weight: 600; padding: 8px 14px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.btn-save-week:hover { border-color: #4caf80; color: #4caf80; }
+
+/* Colored report preview */
+.report-preview {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  line-height: 1.8; white-space: pre-wrap; word-break: break-word;
+  margin-bottom: 12px; max-height: 320px; overflow-y: auto;
+}
+.report-line-changed  { color: #4caf80; font-weight: 600; }
+.report-line-noupdate { color: #e74c3c; }
+.report-line-normal   { color: var(--text); }
+.report-line-bullet   { color: var(--muted); padding-left: 1em; display: block; }
+.report-line-bullet.changed  { color: #4caf80; }
+.report-line-bullet.noupdate { color: #e74c3c; }
+  display: flex; justify-content: space-between; align-items: center;
+  margin: 16px 0 8px;
+}
+.report-output-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+}
+.report-textarea {
+  width: 100%; min-height: 280px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.7;
+  padding: 14px 16px; outline: none; resize: vertical; box-sizing: border-box;
+}
 .add-form {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1348,6 +1614,7 @@ select option { background: var(--surface2); }
       <button class="nav-tab" onclick="switchView('completed',this)">✅ Done <span class="tab-badge" id="doneBadge">0</span></button>
       <button class="nav-tab" onclick="switchView('dashboard',this)">📊 Dashboard</button>
       <button class="nav-tab" onclick="switchView('criteria',this)">⚙️ Criteria</button>
+      <button class="nav-tab" onclick="switchView('report',this)">📄 Report</button>
     </div>
   </header>
 
@@ -1460,8 +1727,40 @@ select option { background: var(--surface2); }
   </div>
 
   <!-- ════════════════════════════════════════
-       DASHBOARD VIEW
+       REPORT VIEW
   ════════════════════════════════════════ -->
+  <div id="view-report" style="display:none">
+    <div class="report-toolbar">
+      <div>
+        <div class="report-title">Weekly Report Builder</div>
+        <div class="report-subtitle">Edit notes → ⚡ Generate → review highlights → 📋 Copy</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0">
+        <button class="btn-save-week" onclick="saveWeekLog()">💾 Save Week</button>
+        <button class="btn-gen-report" onclick="generateReport()">⚡ Generate</button>
+        <button class="btn-archive-year" onclick="archiveYear()" title="Export all weekly reports to .txt then clear history">📦 Archive Year</button>
+      </div>
+    </div>
+    <div id="reportEditor"></div>
+    <div id="reportOutput" style="display:none">
+      <div class="report-output-header">
+        <span class="report-output-label">Preview (🟢 changed · 🔴 no update)</span>
+        <button class="btn-copy-report" onclick="copyReport()">📋 Copy plain text</button>
+      </div>
+      <div class="report-preview" id="reportPreview"></div>
+      <div class="report-output-label" style="margin:10px 0 6px">Editable plain text</div>
+      <textarea class="report-textarea" id="reportText" spellcheck="false"></textarea>
+    </div>
+
+    <!-- Weekly History -->
+    <div id="reportHistory" style="margin-top:24px;display:none">
+      <div class="report-output-header">
+        <span class="report-output-label">📚 Report History</span>
+        <span class="report-output-label" id="reportStorageInfo" style="color:var(--muted)"></span>
+      </div>
+      <div id="reportHistoryList"></div>
+    </div>
+  </div>
   <div id="view-dashboard" style="display:none">
 
     <!-- Time Controls -->
@@ -1616,6 +1915,7 @@ let openPopupId   = null;
 let dashMode      = 'all';   // 'all' | 'yearly' | 'monthly'
 let dashYear      = new Date().getFullYear();
 let dashMonth     = new Date().getMonth(); // 0-indexed
+let weeklyLogs    = [];
 
 const DEFAULT_CRITERIA = [
   { id: 2001, name: 'Work',     emoji: '💼', subcriteria: [{id:20011,name:'Meetings'},{id:20012,name:'Reports'},{id:20013,name:'Planning'}] },
@@ -1627,13 +1927,19 @@ const DEFAULT_CRITERIA = [
 function load() {
   const rt = localStorage.getItem(TASKS_KEY);
   const rc = localStorage.getItem(CRITERIA_KEY);
-  tasks    = rt ? JSON.parse(rt) : [];
-  criteria = rc ? JSON.parse(rc) : JSON.parse(JSON.stringify(DEFAULT_CRITERIA));
+  const rl = localStorage.getItem('wtt_weekly_logs');
+  tasks      = rt ? JSON.parse(rt) : [];
+  criteria   = rc ? JSON.parse(rc) : JSON.parse(JSON.stringify(DEFAULT_CRITERIA));
+  const raw  = rl ? JSON.parse(rl) : {};
+  // Support both old array format and new object format
+  weeklyLogs = Array.isArray(raw) ? { history: [], lastSnapshot: null } : raw;
+  if (!weeklyLogs.history) weeklyLogs.history = [];
 }
 
 function save() {
-  localStorage.setItem(TASKS_KEY,    JSON.stringify(tasks));
-  localStorage.setItem(CRITERIA_KEY, JSON.stringify(criteria));
+  localStorage.setItem(TASKS_KEY,         JSON.stringify(tasks));
+  localStorage.setItem(CRITERIA_KEY,      JSON.stringify(criteria));
+  localStorage.setItem('wtt_weekly_logs', JSON.stringify(weeklyLogs));
 }
 
 // ═══════════════════════════════════════════════════
@@ -1647,9 +1953,11 @@ function switchView(view, btn) {
   document.getElementById('view-completed').style.display  = view === 'completed' ? '' : 'none';
   document.getElementById('view-dashboard').style.display  = view === 'dashboard' ? '' : 'none';
   document.getElementById('view-criteria').style.display   = view === 'criteria'  ? '' : 'none';
+  document.getElementById('view-report').style.display     = view === 'report'    ? '' : 'none';
   if (view === 'dashboard') renderDashboard();
   if (view === 'criteria')  renderCriteria();
   if (view === 'completed') renderCompleted();
+  if (view === 'report')    renderReport();
 }
 
 // ═══════════════════════════════════════════════════
@@ -2472,7 +2780,553 @@ function fmtDateTime(iso) {
 }
 
 // ═══════════════════════════════════════════════════
-// RENDER COMPLETED
+// REPORT TAB
+// ═══════════════════════════════════════════════════
+
+// reportData[criteriaId][subcriteriaId] = { note, noUpdate, bullets:[{text,noUpdate}], showCount, showTasks }
+// Stored in criteria themselves for persistence
+
+function getReportData(cid, sid) {
+  const c = criteria.find(x => x.id === cid);
+  if (!c) return null;
+  if (sid) {
+    const s = c.subcriteria.find(x => x.id === sid);
+    if (!s) return null;
+    if (!s.report) s.report = { note: '', noUpdate: false, bullets: [], showCount: true, showTasks: false, includeInReport: true, doneOffset: 0, totalOffset: 0 };
+    return s.report;
+  } else {
+    if (!c.report) c.report = { note: '', noUpdate: false, bullets: [], showCount: false, showTasks: false };
+    return c.report;
+  }
+}
+
+function saveReport() { save(); }
+
+function renderReport() {
+  renderReportHistory();
+  const editor = document.getElementById('reportEditor');
+  if (!editor) return;
+
+  // Hide output when re-rendering editor
+  const out = document.getElementById('reportOutput');
+  if (out) out.style.display = 'none';
+
+  if (criteria.length === 0) {
+    editor.innerHTML = `<div class="empty"><div class="empty-icon">📄</div>No criteria yet.<br>Add criteria first in the ⚙️ Criteria tab.</div>`;
+    return;
+  }
+
+  editor.innerHTML = criteria.map(c => {
+    const subBlocks = c.subcriteria.map(s => renderSubBlock(c.id, s.id)).join('');
+    const critTasks = tasks.filter(t => t.criteriaId === c.id && !t.done);
+    // Also render a block for tasks with no sub-criteria
+    const noSubTasks = critTasks.filter(t => !t.subcriteriaId);
+    const noSubBlock = noSubTasks.length > 0 ? renderSubBlock(c.id, null) : '';
+
+    return `
+    <div class="report-crit-block open" id="rcb-${c.id}">
+      <div class="report-crit-header" onclick="toggleReportBlock(${c.id})">
+        <span class="report-crit-icon">${esc(c.emoji)}</span>
+        <span class="report-crit-name">${esc(c.name)}</span>
+        <span class="report-crit-chevron">▶</span>
+      </div>
+      <div class="report-crit-body" id="rcbody-${c.id}">
+        ${subBlocks}${noSubBlock}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSubBlock(cid, sid) {
+  const c   = criteria.find(x => x.id === cid);
+  const s   = sid ? c?.subcriteria.find(x => x.id === sid) : null;
+  const rd  = getReportData(cid, sid);
+  // Default includeInReport to true if not set
+  if (rd.includeInReport === undefined) rd.includeInReport = true;
+  const label = s ? esc(s.name) : '(No sub-criteria)';
+  const incl  = rd.includeInReport;
+
+  // Year count: tasks created/taskDate in current year + unfinished from prev years
+  const curYear = new Date().getFullYear();
+  const allTasks = tasks.filter(t =>
+    t.criteriaId === cid && (sid ? t.subcriteriaId === sid : !t.subcriteriaId)
+  );
+  const yearTasks = allTasks.filter(t => {
+    const dateStr = t.taskDate || t.created?.slice(0,10);
+    const y = new Date(dateStr).getFullYear();
+    return y === curYear || (!t.done && y < curYear); // include unfinished from prev years
+  });
+  const doneTasks   = yearTasks.filter(t => t.done);
+  const activeTasks = yearTasks.filter(t => !t.done);
+  const doneOff   = rd.doneOffset  || 0;
+  const totalOff  = doneOff; // completed = also counted in total
+  const adjDone   = doneTasks.length  + doneOff;
+  const adjTotal  = yearTasks.length  + totalOff;
+  const countStr  = `${adjDone}/${adjTotal}`;
+
+  const taskListHtml = rd.showTasks ? activeTasks.map(t =>
+    `<div style="font-family:JetBrains Mono,monospace;font-size:0.6rem;color:var(--muted);padding:2px 0">• ${esc(t.text)}</div>`
+  ).join('') : '';
+
+  const bulletsHtml = (rd.bullets || []).map((b, bi) => `
+    <div class="report-bullet-row">
+      <span class="report-bullet-prefix">-</span>
+      <textarea class="report-bullet-input" rows="1"
+                oninput="autoResize(this)"
+                onblur="updateBullet(${cid},${sid||'null'},${bi},'text',this.value)"
+                placeholder="Bullet detail…">${esc(b.text)}</textarea>
+      <span class="report-bullet-noupdate${b.noUpdate?' on':''}"
+            onclick="updateBullet(${cid},${sid||'null'},${bi},'noUpdate',!${b.noUpdate});renderReport()"
+            title="Toggle (No update)">(No update)</span>
+      <button class="btn-del-bullet" onclick="deleteBullet(${cid},${sid||'null'},${bi})">✕</button>
+    </div>`).join('');
+
+  const trackerCount = `${doneTasks.length}/${yearTasks.length}`;
+
+  return `
+  <div class="report-sub-block${incl?'':' excluded'}" id="rsb-${cid}-${sid||'none'}">
+    <div class="report-sub-header">
+      <span class="report-sub-name">${label}</span>
+      <span class="report-task-count">${countStr} (${curYear})</span>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--muted)">
+        <input type="checkbox" ${incl?'checked':''} onchange="updateReportField(${cid},${sid||'null'},'includeInReport',this.checked)" style="accent-color:#4caf80;cursor:pointer">
+        In report
+      </label>
+    </div>
+    ${incl ? `
+    <div class="report-offset-row">
+      <span class="report-offset-label">📦 Pre-tracker completed:</span>
+      <input class="report-offset-input" type="number" min="0" value="${doneOff}"
+             title="Tasks completed before this tracker — adds to both done and total"
+             onchange="updateReportField(${cid},${sid||'null'},'doneOffset',parseInt(this.value)||0)">
+      <span class="report-offset-preview">= ${countStr}</span>
+    </div>
+    <div class="report-toggle-row">
+      <label class="report-toggle${rd.showCount?' active-toggle':''}">
+        <input type="checkbox" ${rd.showCount?'checked':''} onchange="updateReportField(${cid},${sid||'null'},'showCount',this.checked)">
+        Include count (${countStr})
+      </label>
+      <label class="report-toggle${rd.showTasks?' active-toggle':''}">
+        <input type="checkbox" ${rd.showTasks?'checked':''} onchange="updateReportField(${cid},${sid||'null'},'showTasks',this.checked)">
+        Include task names
+      </label>
+      <label class="report-noupdate-toggle${rd.noUpdate?' on':''}">
+        <input type="checkbox" ${rd.noUpdate?'checked':''} onchange="updateReportField(${cid},${sid||'null'},'noUpdate',this.checked)">
+        (No update)
+      </label>
+    </div>
+    ${taskListHtml}
+    <textarea class="report-note-input" rows="1" id="rnote-${cid}-${sid||'none'}"
+              placeholder="Type the status note for this line…"
+              oninput="autoResize(this);saveNoteField(${cid},${sid||'null'},this.value)"
+              onblur="saveNoteField(${cid},${sid||'null'},this.value)">${esc(rd.note)}</textarea>
+    <div class="report-bullets-label">Bullet points</div>
+    ${bulletsHtml}
+    <button class="btn-add-bullet" onclick="addBullet(${cid},${sid||'null'})">+ Add bullet point</button>
+    ` : ''}
+  </div>`;
+}
+
+function toggleReportBlock(cid) {
+  const block = document.getElementById(`rcb-${cid}`);
+  const body  = document.getElementById(`rcbody-${cid}`);
+  if (!block || !body) return;
+  const isOpen = block.classList.contains('open');
+  block.classList.toggle('open', !isOpen);
+  body.style.display = isOpen ? 'none' : '';
+}
+
+function saveNoteField(cid, sid, value) {
+  const rd = getReportData(cid, sid === 'null' ? null : sid);
+  if (!rd) return;
+  rd.note = value;
+  saveReport();
+}
+
+function updateReportField(cid, sid, field, value) {
+  const rd = getReportData(cid, sid === 'null' ? null : sid);
+  if (!rd) return;
+  rd[field] = value;
+  saveReport();
+  // Only re-render for non-note fields (checkboxes etc.)
+  if (field !== 'note') {
+    const el = document.getElementById(`rsb-${cid}-${sid==='null'?'none':sid}`);
+    if (el) el.outerHTML = renderSubBlock(cid, sid === 'null' ? null : parseInt(sid)||null);
+  }
+}
+
+function updateBullet(cid, sid, idx, field, value) {
+  const rd = getReportData(cid, sid === 'null' ? null : sid);
+  if (!rd || !rd.bullets[idx]) return;
+  rd.bullets[idx][field] = value;
+  saveReport();
+}
+
+function addBullet(cid, sid) {
+  const rd = getReportData(cid, sid === 'null' ? null : sid);
+  if (!rd) return;
+  if (!rd.bullets) rd.bullets = [];
+  rd.bullets.push({ text: '', noUpdate: false });
+  saveReport();
+  renderReport();
+}
+
+function deleteBullet(cid, sid, idx) {
+  const rd = getReportData(cid, sid === 'null' ? null : sid);
+  if (!rd) return;
+  rd.bullets.splice(idx, 1);
+  saveReport();
+  renderReport();
+}
+
+// ── Weekly logs ──
+
+function getWeekLabel() {
+  const d = new Date();
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `W${String(week).padStart(2,'0')} ${d.getFullYear()}`;
+}
+
+function getWeekDate() {
+  return new Date().toLocaleDateString([], { year:'numeric', month:'short', day:'numeric' });
+}
+
+function saveWeekLog() {
+  // 1. Snapshot current notes for next week's diff (lean — note, noUpdate, count only)
+  const snapshot = {};
+  criteria.forEach(c => {
+    snapshot[c.id] = {};
+    [null, ...c.subcriteria.map(s => s.id)].forEach(sid => {
+      const rd = getReportData(c.id, sid);
+      if (!rd) return;
+      const subTasks = tasks.filter(t =>
+        t.criteriaId === c.id && (sid ? t.subcriteriaId === sid : !t.subcriteriaId)
+      );
+      const subTasksSnap = tasks.filter(t =>
+        t.criteriaId === c.id && (sid ? t.subcriteriaId === sid : !t.subcriteriaId)
+      );
+      const snapDoneOff  = rd.doneOffset || 0;
+      const snapTotalOff = snapDoneOff;
+      snapshot[c.id][sid || 'null'] = {
+        note:       rd.note || '',
+        noUpdate:   rd.noUpdate || false,
+        doneCount:  subTasksSnap.filter(t=>t.done).length + snapDoneOff,
+        totalCount: subTasksSnap.length + snapTotalOff
+      };
+    });
+  });
+  weeklyLogs.lastSnapshot = snapshot;
+
+  // 2. Save generated report text to history (if generated)
+  const ta    = document.getElementById('reportText');
+  const text  = ta?.value?.trim();
+  const label = getWeekLabel();
+  if (text) {
+    if (!weeklyLogs.history) weeklyLogs.history = [];
+    weeklyLogs.history = weeklyLogs.history.filter(l => l.label !== label);
+    weeklyLogs.history.unshift({ label, date: getWeekDate(), text });
+    // No auto-trim — use 📦 Archive Year to clear when ready
+  }
+
+  save();
+  renderReportHistory();
+  showToast(`💾 Week log saved: ${label}${text ? '' : ' (generate first to save report text)'}`);
+}
+
+function getLastSnapshot() {
+  return weeklyLogs.lastSnapshot || null;
+}
+
+function getPrevNote(cid, sid, lastSnap) {
+  if (!lastSnap) return null;
+  const csnap = lastSnap[cid];
+  if (!csnap) return null;
+  const key = sid == null ? 'null' : String(sid);
+  return csnap[key] || null;
+}
+
+function renderReportHistory() {
+  const hist    = document.getElementById('reportHistory');
+  const listEl  = document.getElementById('reportHistoryList');
+  const infoEl  = document.getElementById('reportStorageInfo');
+  if (!hist || !listEl) return;
+
+  const logs = weeklyLogs.history || [];
+  if (logs.length === 0) {
+    hist.style.display = 'none';
+    return;
+  }
+  hist.style.display = '';
+
+  // Storage estimate
+  const totalChars = logs.reduce((s, l) => s + l.text.length, 0);
+  const kb   = (totalChars / 1024).toFixed(1);
+  const pct  = Math.min(100, Math.round(totalChars / (100 * 1024) * 100)); // ~100KB reference
+  const fillClass = pct > 75 ? 'danger' : pct > 50 ? 'warn' : '';
+
+  if (infoEl) infoEl.textContent = `${logs.length} weeks · ${kb} KB used`;
+
+  listEl.innerHTML = `
+    <div style="font-family:JetBrains Mono,monospace;font-size:0.58rem;color:var(--muted);margin-bottom:4px">
+      Storage: ${kb} KB · ${logs.length} week${logs.length!==1?'s':''} saved
+    </div>
+    <div class="report-storage-bar">
+      <div class="report-storage-fill ${fillClass}" style="width:${pct}%"></div>
+    </div>
+    ${logs.map((l, i) => {
+      const sizeKb = (l.text.length / 1024).toFixed(1);
+      return `
+      <div class="report-week-item" id="rwi-${i}">
+        <div class="report-week-header" onclick="toggleWeekItem(${i})">
+          <span class="report-week-label">📋 ${esc(l.label)}</span>
+          <span class="report-week-date">${esc(l.date)}</span>
+          <span class="report-week-size">${sizeKb} KB</span>
+          <button class="btn-del-week" onclick="deleteWeekLog(event,${i})" title="Delete">✕</button>
+          <span class="report-week-chevron">▶</span>
+        </div>
+        <div class="report-week-body">
+          <div class="report-week-text">${esc(l.text)}</div>
+          <div class="report-week-actions">
+            <button class="btn-week-copy" onclick="copyWeekLog(${i})">📋 Copy</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function toggleWeekItem(i) {
+  const el = document.getElementById(`rwi-${i}`);
+  if (el) el.classList.toggle('open');
+}
+
+function deleteWeekLog(e, i) {
+  e.stopPropagation();
+  const l = weeklyLogs.history?.[i];
+  if (!l) return;
+  if (!confirm(`Delete report "${l.label}"?`)) return;
+  weeklyLogs.history.splice(i, 1);
+  save();
+  renderReportHistory();
+}
+
+async function copyWeekLog(i) {
+  const l = weeklyLogs.history?.[i];
+  if (!l) return;
+  try {
+    await navigator.clipboard.writeText(l.text);
+    showToast('📋 Copied!');
+  } catch {
+    showToast('❌ Could not copy.');
+  }
+}
+
+async function archiveYear() {
+  const logs = weeklyLogs.history || [];
+  if (logs.length === 0) { showToast('ℹ️ No weekly reports to archive.'); return; }
+
+  if (!confirm(`Archive ${logs.length} weekly report${logs.length!==1?'s':''} to a .txt file and clear history?\n\nMake sure you save the file — this cannot be undone.`)) return;
+
+  // Build archive text
+  const year = new Date().getFullYear();
+  const lines = [
+    `WHAT THE TASK?! — WEEKLY REPORT ARCHIVE`,
+    `Generated: ${new Date().toLocaleString()}`,
+    `Weeks: ${logs.length}`,
+    '═'.repeat(60),
+    '',
+    ...logs.flatMap(l => [
+      `── ${l.label}  (${l.date}) ──`,
+      l.text,
+      ''
+    ])
+  ];
+  const text     = lines.join('\n');
+  const fileName = `WhatTheTask-Reports-${year}.txt`;
+
+  // Save file
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: 'Text File', accept: { 'text/plain': ['.txt'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(text);
+      await writable.close();
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      // Fall through to download
+      downloadTxt(text, fileName);
+    }
+  } else {
+    downloadTxt(text, fileName);
+  }
+
+  // Clear history
+  weeklyLogs.history = [];
+  weeklyLogs.lastSnapshot = null;
+  save();
+  renderReportHistory();
+  showToast(`📦 Archived ${logs.length} weeks to ${fileName} — history cleared.`);
+}
+
+function downloadTxt(text, fileName) {
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = fileName; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function populateWeekSelect() { /* no longer needed */ }
+
+// ── Generate with diff ──
+function generateReport() {
+  const plainLines   = [];
+  const previewLines = [];
+  const lastSnap     = getLastSnapshot();
+
+  function diffLine(text, isNoUpdate, prevRd) {
+    const prevNote = prevRd?.note || '';
+    const noteChanged = prevRd !== null && (getReportData && text !== prevNote);
+    return { text, isNoUpdate };
+  }
+
+  criteria.forEach(c => {
+    let critLine = true;
+
+    const noSubTasks = tasks.filter(t => t.criteriaId === c.id && !t.subcriteriaId);
+    const subItems = [
+      ...c.subcriteria.map(s => ({ sid: s.id, label: s.name })),
+      ...(noSubTasks.length > 0 ? [{ sid: null, label: null }] : [])
+    ];
+
+    if (subItems.length === 0) {
+      const rd   = getReportData(c.id, null);
+      const prev = getPrevNote(c.id, null, lastSnap);
+      if (rd) {
+        const critTasks = tasks.filter(t => t.criteriaId === c.id);
+        const countStr  = rd.showCount ? `${critTasks.filter(t=>t.done).length}/${critTasks.length} ` : '';
+        const note      = rd.note || '';
+        const noUpd     = rd.noUpdate ? ' (No update)' : '';
+        const line      = `o ${c.name}: ${countStr}${note}${noUpd}`;
+        const changed   = prev && (prev.note !== note || prev.noUpdate !== rd.noUpdate);
+        plainLines.push(line);
+        previewLines.push({ text: line, noUpdate: rd.noUpdate, changed: !!changed, bullet: false });
+        (rd.bullets||[]).forEach(b => {
+          const bLine  = `    - ${b.text}${b.noUpdate?' (No update)':''}`;
+          const prevB  = prev?.bullets?.find(x => x.text === b.text);
+          const bChg   = !prevB;
+          plainLines.push(bLine);
+          previewLines.push({ text: bLine, noUpdate: b.noUpdate, changed: bChg, bullet: true });
+        });
+      }
+      return;
+    }
+
+    subItems.forEach((item) => {
+      const rd   = getReportData(c.id, item.sid);
+      const prev = getPrevNote(c.id, item.sid, lastSnap);
+      if (!rd) return;
+      if (rd.includeInReport === false) return; // skip excluded
+
+      const curYear  = new Date().getFullYear();
+      const subTasks = tasks.filter(t => {
+        if (t.criteriaId !== c.id) return false;
+        if (item.sid ? t.subcriteriaId !== item.sid : t.subcriteriaId) return false;
+        const dateStr = t.taskDate || t.created?.slice(0,10);
+        const y = new Date(dateStr).getFullYear();
+        return y === curYear || (!t.done && y < curYear);
+      });
+      const doneOff  = rd.doneOffset  || 0;
+      const totalOff = doneOff; // completed tasks also count toward total
+      const adjDone  = subTasks.filter(t=>t.done).length + doneOff;
+      const adjTotal = subTasks.length + totalOff;
+      const countStr = rd.showCount ? `${adjDone}/${adjTotal} ` : '';
+      const note     = rd.note || '';
+      const noUpd    = rd.noUpdate ? ' (No update)' : '';
+      const subLabel = item.label ? `${item.label}: ` : '';
+      const prefix   = critLine ? `o ${c.name}: ` : ' '.repeat(c.name.length + 4);
+      const indent   = ' '.repeat(prefix.length + subLabel.length);
+
+      // Count-change warning: if (No update) ticked but count changed
+      const prevDone  = prev?.doneCount  ?? null;
+      const prevTotal = prev?.totalCount ?? null;
+      const curDone   = adjDone;
+      const curTotal  = adjTotal;
+      const countChanged = prev && (curDone !== prevDone || curTotal !== prevTotal);
+      const countWarn = rd.noUpdate && countChanged
+        ? ` ⚠️ count changed (${prevDone}/${prevTotal} → ${curDone}/${curTotal})`
+        : '';
+
+      const note_changed = prev && (prev.note !== note || prev.noUpdate !== rd.noUpdate);
+      const line     = `${prefix}${subLabel}${countStr}${note}${noUpd}${countWarn}`;
+      const changed  = note_changed || (rd.noUpdate && countChanged);
+
+      critLine = false;
+      plainLines.push(line);
+      previewLines.push({ text: line, noUpdate: rd.noUpdate, changed: !!changed, bullet: false });
+
+      if (rd.showTasks) {
+        subTasks.filter(t=>!t.done).forEach(t => {
+          const tLine = `${indent}• ${t.text}`;
+          plainLines.push(tLine);
+          previewLines.push({ text: tLine, noUpdate: false, changed: false, bullet: true });
+        });
+      }
+      (rd.bullets||[]).forEach(b => {
+        const bLine = `${indent}- ${b.text}${b.noUpdate?' (No update)':''}`;
+        const prevB = prev?.bullets?.find(x => x.text === b.text);
+        plainLines.push(bLine);
+        previewLines.push({ text: bLine, noUpdate: b.noUpdate, changed: !prevB, bullet: true });
+      });
+    });
+
+    plainLines.push('');
+    previewLines.push({ text: '', noUpdate: false, changed: false, blank: true });
+  });
+
+  // Trim trailing blanks
+  while (plainLines.length && plainLines[plainLines.length-1] === '') plainLines.pop();
+  while (previewLines.length && previewLines[previewLines.length-1]?.blank) previewLines.pop();
+
+  // Render preview with colors
+  const preview = document.getElementById('reportPreview');
+  if (preview) {
+    preview.innerHTML = previewLines.map(l => {
+      if (l.blank) return '<br>';
+      const txt = esc(l.text);
+      if (l.bullet) {
+        const cls = l.noUpdate ? 'noupdate' : (l.changed ? 'changed' : '');
+        return `<span class="report-line-bullet ${cls}">${txt}</span>`;
+      }
+      const cls = l.noUpdate ? 'report-line-noupdate' : (l.changed ? 'report-line-changed' : 'report-line-normal');
+      return `<span class="${cls}">${txt}\n</span>`;
+    }).join('');
+  }
+
+  const ta = document.getElementById('reportText');
+  if (ta) ta.value = plainLines.join('\n');
+  const out = document.getElementById('reportOutput');
+  if (out) out.style.display = '';
+  preview?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  renderReportHistory();
+}
+
+async function copyReport() {
+  const ta = document.getElementById('reportText');
+  if (!ta) return;
+  try {
+    await navigator.clipboard.writeText(ta.value);
+    showToast('📋 Copied to clipboard!');
+  } catch {
+    ta.select();
+    document.execCommand('copy');
+    showToast('📋 Copied!');
+  }
+}
 // ═══════════════════════════════════════════════════
 let openDoneGroups    = new Set();
 let openDoneSubgroups = new Set();
