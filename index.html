@@ -2956,7 +2956,8 @@ function renderReport() {
 
   editor.innerHTML = criteria.map(c => {
     const subBlocks = c.subcriteria.map(s => renderSubBlock(c.id, s.id)).join('');
-    const critTasks = tasks.filter(t => t.criteriaId === c.id && !t.done);
+    // Include done tasks so the block still renders (and counts as 1/1) once all tasks are completed
+    const critTasks = tasks.filter(t => t.criteriaId === c.id);
     // Also render a block for tasks with no sub-criteria
     const noSubTasks = critTasks.filter(t => !t.subcriteriaId);
     const noSubBlock = noSubTasks.length > 0 ? renderSubBlock(c.id, null) : '';
@@ -3478,6 +3479,7 @@ function generateReport() {
   criteria.forEach(c => {
     let critLine = true;
 
+    // Include done tasks so completed sub-criteria groups still appear in the report (shows 1/1 etc.)
     const noSubTasks = tasks.filter(t => t.criteriaId === c.id && !t.subcriteriaId);
     const subItems = [
       ...c.subcriteria.map(s => ({ sid: s.id, label: s.name })),
