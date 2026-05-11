@@ -2991,7 +2991,11 @@ function renderSubBlock(cid, sid) {
     t.criteriaId === cid && (sid ? t.subcriteriaId === sid : !t.subcriteriaId)
   );
   const yearTasks = allTasks.filter(t => {
-    const dateStr = t.taskDate || t.created?.slice(0,10);
+    // For done tasks use completedDate so a task created last year but finished
+    // this year is counted in the current year, not the creation year.
+    const dateStr = t.done
+      ? (t.completedDate || t.taskDate || t.created?.slice(0,10))
+      : (t.taskDate || t.created?.slice(0,10));
     const y = new Date(dateStr).getFullYear();
     return y === curYear || (!t.done && y < curYear); // include unfinished from prev years
   });
@@ -3519,7 +3523,11 @@ function generateReport() {
       const subTasks = tasks.filter(t => {
         if (t.criteriaId !== c.id) return false;
         if (item.sid ? t.subcriteriaId !== item.sid : t.subcriteriaId) return false;
-        const dateStr = t.taskDate || t.created?.slice(0,10);
+        // Same as renderSubBlock: use completedDate for done tasks so cross-year
+        // completions land in the year they were actually finished.
+        const dateStr = t.done
+          ? (t.completedDate || t.taskDate || t.created?.slice(0,10))
+          : (t.taskDate || t.created?.slice(0,10));
         const y = new Date(dateStr).getFullYear();
         return y === curYear || (!t.done && y < curYear);
       });
