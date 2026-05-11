@@ -1727,7 +1727,7 @@ select option { background: var(--surface2); }
   <!-- ── Progress ── -->
   <div class="progress-bar-wrap">
     <div class="progress-bar-top">
-      <span class="progress-label">Overall Progress</span>
+      <span class="progress-label">Year Progress <span id="progressYear" style="font-size:0.55rem;opacity:0.6"></span></span>
       <span class="progress-pct" id="progressPct">0%</span>
     </div>
     <div class="progress-track">
@@ -2291,14 +2291,22 @@ function updateGlobalStats() {
   const done    = tasks.filter(t => t.done).length;
   const pending = total - done;
   const high    = tasks.filter(t => t.priority === 'high' && !t.done).length;
-  const pct     = total ? Math.round((done / total) * 100) : 0;
 
   document.getElementById('qTotal').textContent   = total;
   document.getElementById('qDone').textContent    = done;
   document.getElementById('qPending').textContent = pending;
   document.getElementById('qHigh').textContent    = high;
-  document.getElementById('progressPct').textContent    = pct + '%';
-  document.getElementById('progressFill').style.width   = pct + '%';
+
+  // Progress bar: current-year tasks only (same logic as report builder)
+  const curYear   = new Date().getFullYear();
+  const yearTasks = getTasksAsOf(curYear);
+  const yearDone  = yearTasks.filter(t => t.done).length;
+  const yearTotal = yearTasks.length;
+  const pct       = yearTotal ? Math.round((yearDone / yearTotal) * 100) : 0;
+  document.getElementById('progressPct').textContent  = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+  const yrLabel = document.getElementById('progressYear');
+  if (yrLabel) yrLabel.textContent = curYear;
   updateDoneBadge();
 }
 
@@ -3918,18 +3926,41 @@ function navigateDash(dir) {
   renderDashboard();
 }
 
+// Returns tasks with their status "as of the end of year":
+//  - Created this year, completed later      -> { done:false } (was pending at year-end)
+//  - Created this year, done this year / pending -> as-is
+//  - Created prior year, completed this year -> as-is (resolved carry-over)
+//  - Created prior year, still pending (or done after year), year===curYear -> { done:false }
+function getTasksAsOf(year) {
+  const curYear = new Date().getFullYear();
+  const result  = [];
+  for (const t of tasks) {
+    const originStr     = t.taskDate || t.created?.slice(0, 10);
+    const originYear    = new Date(originStr).getFullYear();
+    const completedYear = t.done
+      ? new Date(t.completedDate || originStr).getFullYear()
+      : null;
+
+    if (originYear === year) {
+      if (!t.done || completedYear === year) {
+        result.push(t);                     // belongs here, status as-is
+      } else if (completedYear > year) {
+        result.push({ ...t, done: false }); // completed later: was pending this year
+      }
+    } else if (originYear < year) {
+      if (t.done && completedYear === year) {
+        result.push(t);                     // carry-over resolved this year
+      } else if (year === curYear && (!t.done || completedYear > year)) {
+        result.push({ ...t, done: false }); // still pending: carry-over to current year
+      }
+    }
+  }
+  return result;
+}
+
 function getDashTasks() {
   if (dashMode === 'all') return tasks;
-  return tasks.filter(t => {
-    // Use completedDate for done tasks, taskDate for active, fallback to created
-    const dateStr = t.done
-      ? (t.completedDate || t.taskDate || t.created?.slice(0, 10))
-      : (t.taskDate || t.created?.slice(0, 10));
-    const d = new Date(dateStr);
-    if (dashMode === 'monthly') return d.getFullYear() === dashYear;
-    if (dashMode === 'yearly')  return d.getFullYear() === dashYear;
-    return true;
-  });
+  return getTasksAsOf(dashYear);
 }
 
 // ═══════════════════════════════════════════════════
@@ -4054,8 +4085,10 @@ function renderMonthlyTable(container) {
 
   let totalAll = 0, doneAll = 0, pendingAll = 0, highAll = 0;
 
+  // Use getTasksAsOf so tasks completed after this year show as pending (carry-overs)
+  const yearTasksForTable = getTasksAsOf(dashYear);
   const rows = MONTHS_FULL.map((mName, m) => {
-    const mTasks = tasks.filter(t => {
+    const mTasks = yearTasksForTable.filter(t => {
       const d = new Date(taskEffectiveDate(t));
       return d.getFullYear() === dashYear && d.getMonth() === m;
     });
@@ -4122,14 +4155,19 @@ function renderDayChart() {
   const today = new Date();
   const buckets = [];
 
+  // Use getTasksAsOf so carry-over tasks appear correctly in past-year day charts
+  const dayChartTasks = getTasksAsOf(dashYear).filter(t => {
+    const ds = new Date(taskEffectiveDate(t));
+    return ds.getFullYear() === dashYear && ds.getMonth() === dashMonth;
+  });
   for (let d = 1; d <= daysInMonth; d++) {
-    const done = tasks.filter(t => {
+    const done = dayChartTasks.filter(t => {
       const ds = new Date(taskEffectiveDate(t));
-      return t.done && ds.getFullYear()===dashYear && ds.getMonth()===dashMonth && ds.getDate()===d;
+      return t.done && ds.getDate() === d;
     }).length;
-    const active = tasks.filter(t => {
+    const active = dayChartTasks.filter(t => {
       const ds = new Date(taskEffectiveDate(t));
-      return !t.done && ds.getFullYear()===dashYear && ds.getMonth()===dashMonth && ds.getDate()===d;
+      return !t.done && ds.getDate() === d;
     }).length;
     // Label: show day number every 5 days, always show 1st
     const isToday = today.getFullYear()===dashYear && today.getMonth()===dashMonth && today.getDate()===d;
