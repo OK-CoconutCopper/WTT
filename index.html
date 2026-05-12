@@ -474,8 +474,13 @@ select option { background: var(--surface2); }
   color: var(--accent); flex: 1;
 }
 .report-crit-chevron {
-  font-size: 0.6rem; color: var(--muted); transition: transform 0.22s;
+  font-size: 0.65rem; flex-shrink: 0;
+  width: 20px; height: 20px; border-radius: 5px;
+  background: var(--surface3); border: 1px solid var(--border);
+  color: var(--text); display: inline-flex; align-items: center; justify-content: center;
+  transition: transform 0.22s, background 0.18s, color 0.18s;
 }
+.report-crit-header:hover .report-crit-chevron { background: var(--accent); color: #000; border-color: var(--accent); }
 .report-crit-block.open .report-crit-chevron { transform: rotate(90deg); }
 .report-crit-body { display: none; padding: 12px 14px; display: flex; flex-direction: column; gap: 14px; }
 
@@ -786,9 +791,13 @@ select option { background: var(--surface2); }
   font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted);
 }
 .done-group-chevron {
-  font-size: 0.6rem; color: var(--muted); margin-left: 4px;
-  transition: transform 0.25s ease; display: inline-block;
+  font-size: 0.65rem; margin-left: 4px; flex-shrink: 0;
+  width: 20px; height: 20px; border-radius: 5px;
+  background: var(--surface3); border: 1px solid var(--border);
+  color: var(--text); display: inline-flex; align-items: center; justify-content: center;
+  transition: transform 0.25s ease, background 0.18s, color 0.18s;
 }
+.done-group-header:hover .done-group-chevron { background: var(--accent); color: #000; border-color: var(--accent); }
 .done-group.open .done-group-chevron { transform: rotate(90deg); }
 
 .done-group-body {
@@ -813,9 +822,13 @@ select option { background: var(--surface2); }
   content: ''; display: none;
 }
 .done-subgroup-chevron {
-  font-size: 0.55rem; color: var(--muted); margin-left: auto;
-  transition: transform 0.2s ease; display: inline-block;
+  font-size: 0.6rem; margin-left: auto; flex-shrink: 0;
+  width: 16px; height: 16px; border-radius: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); display: inline-flex; align-items: center; justify-content: center;
+  transition: transform 0.2s ease, background 0.18s;
 }
+.done-subgroup-header:hover .done-subgroup-chevron { background: var(--accent); color: #000; border-color: var(--accent); }
 .done-subgroup.open .done-subgroup-chevron { transform: rotate(90deg); }
 .done-subgroup-count {
   font-family: var(--font-mono); font-size: 0.58rem; color: var(--muted); font-weight: 400;
@@ -950,9 +963,13 @@ select option { background: var(--surface2); }
 }
 .task-group-count { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); }
 .task-group-chevron {
-  font-size: 0.6rem; color: var(--muted); margin-left: 4px;
-  transition: transform 0.25s ease; display: inline-block;
+  font-size: 0.65rem; margin-left: 4px; flex-shrink: 0;
+  width: 20px; height: 20px; border-radius: 5px;
+  background: var(--surface3); border: 1px solid var(--border);
+  color: var(--text); display: inline-flex; align-items: center; justify-content: center;
+  transition: transform 0.25s ease, background 0.18s, color 0.18s;
 }
+.task-group-header:hover .task-group-chevron { background: var(--accent); color: #000; border-color: var(--accent); }
 .task-group.open .task-group-chevron { transform: rotate(90deg); }
 .task-group-body { display: none; padding-top: 8px; }
 .task-group.open .task-group-body { display: block; }
@@ -971,9 +988,13 @@ select option { background: var(--surface2); }
 }
 .task-subgroup-header:hover { border-left-color: var(--accent); color: var(--accent); }
 .task-subgroup-chevron {
-  font-size: 0.55rem; color: var(--muted); margin-left: auto;
-  transition: transform 0.2s ease; display: inline-block;
+  font-size: 0.6rem; margin-left: auto; flex-shrink: 0;
+  width: 16px; height: 16px; border-radius: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); display: inline-flex; align-items: center; justify-content: center;
+  transition: transform 0.2s ease, background 0.18s;
 }
+.task-subgroup-header:hover .task-subgroup-chevron { background: var(--accent); color: #000; border-color: var(--accent); }
 .task-subgroup.open .task-subgroup-chevron { transform: rotate(90deg); }
 .task-subgroup-count { font-family: var(--font-mono); font-size: 0.58rem; color: var(--muted); font-weight: 400; }
 .task-subgroup-body { display: none; padding-top: 6px; }
